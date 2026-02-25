@@ -27,6 +27,9 @@
                         <li class="nav-item">
                             <a class="nav-link" asp-controller="Calculation" asp-action="Index">Calculations</a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-controller="Docs" asp-action="Article" asp-route-name="about">Docs</a>
+                        </li>
                     </ul>
                     @if (User.Identity?.IsAuthenticated == true)
                     {
