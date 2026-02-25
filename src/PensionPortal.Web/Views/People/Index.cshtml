@@ -1,0 +1,51 @@
+@using System.Data
+@model DataTable
+@{
+    ViewData["Title"] = "People";
+}
+
+<h1>People</h1>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+@if (TempData["Warning"] != null)
+{
+    <div class="alert alert-warning">@TempData["Warning"]</div>
+}
+
+<p>
+    <a class="btn btn-primary btn-sm" asp-action="Add">Add Person</a>
+    <a class="btn btn-outline-secondary btn-sm" asp-action="Upload">Upload CSV</a>
+</p>
+
+@if (Model.Rows.Count == 0)
+{
+    <p>No people found.</p>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>First Name</th>
+                <th>Surname</th>
+                <th>Date of Birth</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (DataRow row in Model.Rows)
+            {
+                <tr>
+                    <td>@row["PersonID"]</td>
+                    <td>@row["FirstName"]</td>
+                    <td>@row["Surname"]</td>
+                    <td>@(((DateTime)row["DateOfBirth"]).ToString("dd MMM yyyy"))</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    <p>@Model.Rows.Count person(s)</p>
+}

@@ -1,0 +1,25 @@
+@{
+    ViewData["Title"] = "Calculations";
+}
+
+<h1>Run Calculation</h1>
+<p>Calculate age in complete months for all people as at a given date.</p>
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+<form method="post" asp-action="RunAll">
+    <div class="row">
+        <div class="col-md-4">
+            <div class="mb-3">
+                <label for="calculationDate" class="form-label">Calculation Date</label>
+                <input type="date" class="form-control" id="calculationDate" name="calculationDate"
+                       value="@DateTime.Today.ToString("yyyy-MM-dd")" required />
+            </div>
+            <button type="submit" class="btn btn-primary">Calculate All</button>
+            <a class="btn btn-secondary" asp-action="Results">View Results</a>
+        </div>
+    </div>
+</form>

@@ -1,0 +1,31 @@
+@{
+    ViewData["Title"] = "Add Person";
+}
+
+<h1>Add Person</h1>
+
+@if (ViewBag.Error != null)
+{
+    <div class="alert alert-danger">@ViewBag.Error</div>
+}
+
+<form method="post" asp-action="Add">
+    <div class="row">
+        <div class="col-md-6">
+            <div class="mb-3">
+                <label for="firstName" class="form-label">First Name</label>
+                <input type="text" class="form-control" id="firstName" name="firstName" required />
+            </div>
+            <div class="mb-3">
+                <label for="surname" class="form-label">Surname</label>
+                <input type="text" class="form-control" id="surname" name="surname" required />
+            </div>
+            <div class="mb-3">
+                <label for="dateOfBirth" class="form-label">Date of Birth</label>
+                <input type="date" class="form-control" id="dateOfBirth" name="dateOfBirth" required />
+            </div>
+            <button type="submit" class="btn btn-primary">Add</button>
+            <a class="btn btn-secondary" asp-action="Index">Cancel</a>
+        </div>
+    </div>
+</form>

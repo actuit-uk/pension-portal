@@ -21,6 +21,12 @@
                         <li class="nav-item">
                             <a class="nav-link" asp-controller="Home" asp-action="Index">Home</a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-controller="People" asp-action="Index">People</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-controller="Calculation" asp-action="Index">Calculations</a>
+                        </li>
                     </ul>
                     @if (User.Identity?.IsAuthenticated == true)
                     {
