@@ -32,6 +32,18 @@ ASP.NET Core's built-in cookie authentication middleware replaces the legacy coo
 
 The factor table (`tblAgeFactor`) maps age in months to a factor value. The C# code reads this table into memory, performs the calculation, and looks up the factor — proving the pattern needed for the real GMP system where actuarial tables drive calculations.
 
+### GMP Calculation Engine (CalcLib)
+
+The GMP Equalisation calculation is implemented as pure, static C# methods in CalcLib with no database dependency. Factor data (S148 earnings orders, fixed revaluation rates, PIP increases, discount rates) is injected via the `IFactorProvider` interface, keeping the calculation logic fully testable.
+
+Key types:
+
+- **`GmpCalculator`** — public entry point for GMP and equalisation calculations
+- **`MemberData`** — immutable record of member inputs (sex, DOB, earnings history)
+- **`IFactorProvider`** / **`DictionaryFactorProvider`** — factor abstraction with in-memory implementation
+- **`GmpResult`** — calculation output with pre/post-88 GMP splits for both sexes
+- Internal helpers: `WorkingLife`, `TaxYearGmp`, `Revaluation` — mirror the principles from the legacy GMPEQ stored procedures but as clean, tested C#
+
 ## Deployment
 
 The application is published with `dotnet publish -c Release` and deployed to IONOS via FTP. The CalcLib DLL is bundled in the published output — it runs on the web server, not as a separate service.

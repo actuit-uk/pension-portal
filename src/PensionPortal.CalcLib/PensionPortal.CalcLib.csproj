@@ -7,4 +7,8 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="PensionPortal.CalcLib.Tests" />
+  </ItemGroup>
+
 </Project>
