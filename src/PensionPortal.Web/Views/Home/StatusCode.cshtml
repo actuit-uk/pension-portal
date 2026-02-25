@@ -1,0 +1,25 @@
+@{
+    var code = ViewBag.StatusCode as int? ?? 0;
+    ViewData["Title"] = code.ToString();
+
+    var message = code switch
+    {
+        404 => "The page you're looking for doesn't exist.",
+        403 => "You don't have permission to access this page.",
+        _ => "An error occurred."
+    };
+
+    var heading = code switch
+    {
+        404 => "Page not found",
+        403 => "Access denied",
+        _ => $"Error {code}"
+    };
+}
+
+<div class="text-center mt-5">
+    <h1 class="display-1 text-muted">@code</h1>
+    <h2>@heading</h2>
+    <p class="lead">@message</p>
+    <a class="btn btn-primary mt-3" asp-controller="Home" asp-action="Index">Back to Home</a>
+</div>

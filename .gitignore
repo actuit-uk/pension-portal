@@ -41,5 +41,7 @@ Thumbs.db
 ## Secrets - never commit
 appsettings.Production.json
 
-## DocFX output
+## DocFX output (regenerate with: cd docs && docfx)
 docs/_site/
+docs/api/
+src/PensionPortal.Web/wwwroot/apidocs/

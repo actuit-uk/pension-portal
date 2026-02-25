@@ -19,4 +19,12 @@ public class HomeController : Controller
     {
         return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
     }
+
+    [AllowAnonymous]
+    [Route("/Home/StatusCode")]
+    public IActionResult HttpError(int code)
+    {
+        ViewBag.StatusCode = code;
+        return View("StatusCode");
+    }
 }
