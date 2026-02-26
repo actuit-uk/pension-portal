@@ -2,3 +2,11 @@
   href: overview.md
 - name: Architecture
   href: architecture.md
+- name: PASA Reference
+  items:
+    - name: Methodology Guidance
+      href: pasa-methodology-guidance.md
+    - name: Conversion Examples
+      href: pasa-conversion-examples.md
+    - name: Anti-Franking Guidance
+      href: pasa-anti-franking-guidance.md
