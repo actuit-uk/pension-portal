@@ -76,7 +76,7 @@ Excess pension (total scheme pension minus GMP) uses a three-tier fallback:
 
 ### Methodology Status
 
-The engine covers the full C2 methodology: GMP calculation with Section 148 revaluation, excess pension, Barber window isolation, anti-franking, interest on arrears, separate and overall pension increase methods, and LPI3/LPI5 increase rates. Remaining gap: FixedRate/LimitedRate GMP revaluation (Issue #5). PASA reference PDFs are in `wwwroot/docs/`.
+The engine covers the full C2 methodology: GMP calculation with all three revaluation methods (Section 148, FixedRate, LimitedRate), excess pension, Barber window isolation, anti-franking, interest on arrears, separate and overall pension increase methods, and LPI3/LPI5 increase rates. PASA reference PDFs are in `wwwroot/docs/`.
 
 ### Excel Export (CalcLib.Export)
 
