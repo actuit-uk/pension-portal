@@ -46,11 +46,14 @@ public class CompensationCalculatorTests
     }
 
     [Fact]
-    public void Case4_CompensationNeverNegative()
+    public void Case4_MaleMember_CompensationNeverNegative()
     {
+        // For this male member, the female (opposite-sex) post-88 GMP is always
+        // higher, so signed compensation is non-negative in all active years.
+        // (For female members, compensation CAN be negative — that's correct C2 behaviour.)
         var (entries, _) = GetCase4Compensation();
         Assert.All(entries, e => Assert.True(e.CompensationCashFlow >= 0m,
-            $"Year {e.TaxYear}: compensation should not be negative"));
+            $"Year {e.TaxYear}: for this male member, compensation should be non-negative"));
     }
 
     [Fact]

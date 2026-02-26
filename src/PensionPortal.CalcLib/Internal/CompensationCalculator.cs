@@ -4,6 +4,8 @@ namespace PensionPortal.CalcLib.Internal;
 /// Calculates equalisation compensation by comparing the member's actual post-88 GMP
 /// cash flow against the opposite-sex scenario. Compensation accrues from the second
 /// PIP year onwards (first PIP year is the base before any increases apply).
+/// Uses signed differences (C2-style): years where the actual sex is better produce
+/// negative compensation that offsets years where the opposite sex is better.
 /// Discount factors are tracked for present-value reporting but the primary total
 /// is undiscounted (sum of annual compensation amounts).
 /// </summary>
@@ -52,8 +54,9 @@ internal static class CompensationCalculator
                 ? (memberSex == Sex.Male ? cf.Post88GmpFemale : cf.Post88GmpMale)
                 : 0m;
 
-            // Compensation: positive means opposite-sex scenario is better
-            decimal comp = Math.Max(0m, oppSexPost88 - actualPost88);
+            // Compensation: positive = opposite-sex better, negative = actual sex better.
+            // Signed differences allow C2-style offsetting across years.
+            decimal comp = oppSexPost88 - actualPost88;
 
             // Discount rate (tracked for future PV calculations)
             decimal rate = factors.GetDiscountRate(cf.TaxYear) ?? assumptions.FutureDiscountRate;
