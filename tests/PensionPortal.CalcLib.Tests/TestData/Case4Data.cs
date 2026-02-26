@@ -117,6 +117,20 @@ public static class Case4Data
         FutureDiscountRate: 0.025m,
         ProjectionEndYear: 2026);
 
+    /// <summary>
+    /// Scheme configuration matching Case 4 defaults: NRA 65M/60F, post-eq 65,
+    /// 1/80ths accrual, LPI3, Section 148 revaluation.
+    /// </summary>
+    public static SchemeConfig Scheme => new(
+        PreEqNraMale: 65,
+        PreEqNraFemale: 60,
+        PostEqNra: 65,
+        DateOfEqualisation: new DateTime(1990, 5, 17),
+        AccrualRateDenominator: 80,
+        PipMethod: PipIncreaseMethod.LPI3,
+        GmpRevMethod: GmpRevaluationMethod.Section148,
+        Assumptions: Assumptions);
+
     // Expected results from tblCalculationResult
     public static class Expected
     {
@@ -159,7 +173,11 @@ public static class Case4Data
         public const decimal Pre88MaleRevalued = 425.36m;     // flat once in PIP
         public const decimal Pre88FemaleRevalued = 450.84m;   // flat once in PIP
 
-        // Compensation
+        // Barber window
+        public const decimal BarberWindowProportion = 0.777889m;
+        // Compensation (Barber-adjusted: 77.8% of post-88 GMP is in window)
+        public const decimal CompensationTo2026Barber = 11142.19m;
+        // Compensation (unadjusted, all post-88 — for standalone CompensationCalculator tests)
         public const decimal CompensationTo2026 = 14323.63m;
     }
 }

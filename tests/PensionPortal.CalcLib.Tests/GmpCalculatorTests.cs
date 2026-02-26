@@ -81,11 +81,19 @@ public class GmpCalculatorTests
     }
 
     [Fact]
+    public void Case4_BarberWindowProportion_MatchesExpected()
+    {
+        var result = GmpCalculator.CalculateGmp(
+            Case4Data.Member, GmpRevaluationMethod.Section148, Case4Data.CreateFactors());
+
+        Assert.Equal(Case4Data.Expected.BarberWindowProportion, result.BarberWindowProportion);
+    }
+
+    [Fact]
     public void Case4_FullPipeline_ReturnsEqualisationResult()
     {
         var result = GmpCalculator.Calculate(
-            Case4Data.Member, GmpRevaluationMethod.Section148,
-            Case4Data.CreateFactors(), Case4Data.Assumptions);
+            Case4Data.Member, Case4Data.Scheme, Case4Data.CreateFactors());
 
         // GMP result is populated
         Assert.Equal(Case4Data.Expected.TotalGmpMalePA, result.Gmp.MaleAtLeaving.TotalAnnual);
@@ -98,7 +106,7 @@ public class GmpCalculatorTests
         // Compensation entries match cashflow count
         Assert.Equal(25, result.Compensation.Count);
 
-        // Total compensation matches expected
-        Assert.Equal(Case4Data.Expected.CompensationTo2026, result.TotalCompensation);
+        // Total compensation matches expected (Barber-adjusted)
+        Assert.Equal(Case4Data.Expected.CompensationTo2026Barber, result.TotalCompensation);
     }
 }

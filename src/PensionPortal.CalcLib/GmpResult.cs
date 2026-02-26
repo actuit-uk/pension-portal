@@ -14,6 +14,8 @@ namespace PensionPortal.CalcLib;
 /// <param name="RevaluationMethod">The revaluation method used.</param>
 /// <param name="RevaluationFactorMale">Revaluation factor applied to male GMP.</param>
 /// <param name="RevaluationFactorFemale">Revaluation factor applied to female GMP.</param>
+/// <param name="BarberWindowProportion">Fraction of post-88 GMP within the Barber window (0 to 1). Scales GMP compensation.</param>
+/// <param name="BarberServiceProportion">Fraction of pensionable service in the Barber window (0 to 1). Scales excess compensation.</param>
 /// <param name="TaxYearDetails">Per-tax-year audit trail of intermediate calculation values.</param>
 public record GmpResult(
     int WorkingLifeMale,
@@ -26,4 +28,6 @@ public record GmpResult(
     GmpRevaluationMethod RevaluationMethod,
     decimal RevaluationFactorMale,
     decimal RevaluationFactorFemale,
+    decimal BarberWindowProportion,
+    decimal BarberServiceProportion,
     IReadOnlyList<TaxYearDetail> TaxYearDetails);

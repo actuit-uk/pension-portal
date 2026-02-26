@@ -4,7 +4,8 @@ namespace PensionPortal.CalcLib.Internal;
 /// Builds the year-by-year pension cash flow projection from GMP results.
 /// Uses the separate increase method: pre-88 GMP stays flat, post-88 GMP
 /// increases at LPI3 (CPI capped at 3%) once in payment.
-/// Excess pension above GMP is tracked but set to zero until scheme config is applied.
+/// Excess pension is computed via ExcessPensionCalculator (three-tier fallback)
+/// and increases at the scheme PIP rate once in payment.
 /// </summary>
 internal static class CashFlowBuilder
 {
@@ -13,14 +14,15 @@ internal static class CashFlowBuilder
     /// </summary>
     /// <param name="gmp">GMP calculation result (at-leaving and revalued values).</param>
     /// <param name="member">Member data (DOB for determining GMP payable ages).</param>
+    /// <param name="scheme">Scheme configuration (NRA ages, PIP method, assumptions).</param>
     /// <param name="factors">Factor provider for LPI3 increase lookups.</param>
-    /// <param name="assumptions">Future projection assumptions.</param>
     internal static IReadOnlyList<CashFlowEntry> Build(
         GmpResult gmp,
         MemberData member,
-        IFactorProvider factors,
-        FutureAssumptions assumptions)
+        SchemeConfig scheme,
+        IFactorProvider factors)
     {
+        var assumptions = scheme.Assumptions;
         int startYear = gmp.TaxYearOfLeaving;
         int endYear = assumptions.ProjectionEndYear;
 
@@ -28,14 +30,21 @@ internal static class CashFlowBuilder
         int malePipYear = PipStartYear(member.DateOfBirth, 65);
         int femalePipYear = PipStartYear(member.DateOfBirth, 60);
 
+        // Excess pension above GMP (three-tier: direct, salary-based, or zero)
+        var (excessAtLeavingM, excessAtLeavingF) = ExcessPensionCalculator.Calculate(
+            member, scheme, gmp.MaleAtLeaving.TotalAnnual, gmp.FemaleAtLeaving.TotalAnnual);
+
         var entries = new List<CashFlowEntry>();
 
         // Running post-88 amounts (updated each PIP year)
         decimal runningPost88M = 0m;
         decimal runningPost88F = 0m;
+        decimal runningExcessM = excessAtLeavingM;
+        decimal runningExcessF = excessAtLeavingF;
         bool maleEnteredPip = false;
         bool femaleEnteredPip = false;
         decimal prevFactor = 0m;
+        decimal prevExcessFactor = 0m;
 
         for (int year = startYear; year <= endYear; year++)
         {
@@ -46,8 +55,8 @@ internal static class CashFlowBuilder
             decimal factor = factors.GetPipIncreaseFactor(PipIncreaseMethod.LPI3, year)
                 ?? assumptions.FuturePost88GmpIncRate;
 
-            // Excess increase factor (scheme PIP rate — placeholder, same source for now)
-            decimal excessFactor = factors.GetPipIncreaseFactor(PipIncreaseMethod.LPI3, year)
+            // Excess increase factor (scheme PIP rate — typically LPI5 for excess, LPI3 for GMP)
+            decimal excessFactor = factors.GetPipIncreaseFactor(scheme.PipMethod, year)
                 ?? assumptions.FuturePipRate;
 
             // --- Male ---
@@ -98,9 +107,26 @@ internal static class CashFlowBuilder
             decimal totalM = Math.Round(pre88M + post88M, 2);
             decimal totalF = Math.Round(pre88F + post88F, 2);
 
-            // Excess pension above GMP (zero for GMP-only calculation)
-            decimal excessM = 0m;
-            decimal excessF = 0m;
+            // Excess pension: flat until PIP, then increases at scheme PIP rate
+            decimal excessM, excessF;
+            if (statusM != GmpStatus.InPayment || !maleEnteredPip)
+            {
+                excessM = excessAtLeavingM;
+            }
+            else
+            {
+                excessM = Math.Round(runningExcessM * (1m + prevExcessFactor), 2);
+                runningExcessM = excessM;
+            }
+            if (statusF != GmpStatus.InPayment || !femaleEnteredPip)
+            {
+                excessF = excessAtLeavingF;
+            }
+            else
+            {
+                excessF = Math.Round(runningExcessF * (1m + prevExcessFactor), 2);
+                runningExcessF = excessF;
+            }
 
             entries.Add(new CashFlowEntry(
                 TaxYear: year,
@@ -120,6 +146,7 @@ internal static class CashFlowBuilder
                 ExcessIncFactor: excessFactor));
 
             prevFactor = factor;
+            prevExcessFactor = excessFactor;
         }
 
         return entries.AsReadOnly();

@@ -10,14 +10,14 @@ public class CompensationCalculatorTests
     {
         var gmp = GmpCalculator.CalculateGmp(
             Case4Data.Member, GmpRevaluationMethod.Section148, Case4Data.CreateFactors());
-        return CashFlowBuilder.Build(gmp, Case4Data.Member, Case4Data.CreateFactors(), Case4Data.Assumptions);
+        return CashFlowBuilder.Build(gmp, Case4Data.Member, Case4Data.Scheme, Case4Data.CreateFactors());
     }
 
     private static (IReadOnlyList<CompensationEntry> Entries, decimal Total) GetCase4Compensation()
     {
         var cashFlow = GetCase4CashFlow();
         return CompensationCalculator.Calculate(
-            cashFlow, Case4Data.Member.Sex, Case4Data.CreateFactors(), Case4Data.Assumptions);
+            cashFlow, Case4Data.Member.Sex, Case4Data.Scheme, Case4Data.CreateFactors());
     }
 
     [Fact]

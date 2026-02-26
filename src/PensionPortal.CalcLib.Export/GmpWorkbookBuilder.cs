@@ -4,10 +4,9 @@ using PensionPortal.CalcLib;
 namespace PensionPortal.CalcLib.Export;
 
 /// <summary>
-/// Builds an Excel workbook from a GMP calculation result.
+/// Builds an Excel workbook from an equalisation result.
 /// Produces a multi-sheet workbook with Summary, per-year audit trail,
-/// and revalued GMP breakdown — following the appcore pattern of
-/// formatted tables with frozen panes and type-aware number formats.
+/// GMP breakdowns, cash flow projection, and compensation schedule.
 /// </summary>
 public static class GmpWorkbookBuilder
 {
@@ -17,18 +16,20 @@ public static class GmpWorkbookBuilder
     private const string IntFormat = "#,##0";
 
     /// <summary>
-    /// Creates a complete workbook from a GMP result.
+    /// Creates a complete workbook from an equalisation result.
     /// </summary>
-    /// <param name="result">The GMP calculation result to export.</param>
+    /// <param name="result">The full equalisation result to export.</param>
     /// <param name="memberName">Optional member name for the summary sheet.</param>
-    public static XLWorkbook Build(GmpResult result, string? memberName = null)
+    public static XLWorkbook Build(EqualisationResult result, string? memberName = null)
     {
         var wb = new XLWorkbook();
 
         BuildSummarySheet(wb, result, memberName);
-        BuildTaxYearDetailSheet(wb, result);
-        BuildGmpAtLeavingSheet(wb, result);
-        BuildGmpRevaluedSheet(wb, result);
+        BuildTaxYearDetailSheet(wb, result.Gmp);
+        BuildGmpAtLeavingSheet(wb, result.Gmp);
+        BuildGmpRevaluedSheet(wb, result.Gmp);
+        BuildCashFlowSheet(wb, result);
+        BuildCompensationSheet(wb, result);
 
         return wb;
     }
@@ -36,7 +37,7 @@ public static class GmpWorkbookBuilder
     /// <summary>
     /// Creates a workbook and saves it directly to a file path.
     /// </summary>
-    public static void SaveToFile(GmpResult result, string filePath, string? memberName = null)
+    public static void SaveToFile(EqualisationResult result, string filePath, string? memberName = null)
     {
         using var wb = Build(result, memberName);
         wb.SaveAs(filePath);
@@ -45,19 +46,20 @@ public static class GmpWorkbookBuilder
     /// <summary>
     /// Creates a workbook and writes it to a stream.
     /// </summary>
-    public static void SaveToStream(GmpResult result, Stream stream, string? memberName = null)
+    public static void SaveToStream(EqualisationResult result, Stream stream, string? memberName = null)
     {
         using var wb = Build(result, memberName);
         wb.SaveAs(stream);
     }
 
-    private static void BuildSummarySheet(XLWorkbook wb, GmpResult result, string? memberName)
+    private static void BuildSummarySheet(XLWorkbook wb, EqualisationResult result, string? memberName)
     {
+        var gmp = result.Gmp;
         var ws = wb.AddWorksheet("Summary");
         ws.TabColor = XLColor.DarkBlue;
 
         int row = 1;
-        ws.Cell(row, 1).Value = "GMP Calculation Summary";
+        ws.Cell(row, 1).Value = "GMP Equalisation Summary";
         ws.Cell(row, 1).Style.Font.Bold = true;
         ws.Cell(row, 1).Style.Font.FontSize = 14;
         row += 2;
@@ -67,10 +69,10 @@ public static class GmpWorkbookBuilder
         {
             AddLabelValue(ws, row++, "Member", memberName);
         }
-        AddLabelValue(ws, row++, "Revaluation Method", result.RevaluationMethod.ToString());
-        AddLabelValue(ws, row++, "Tax Year of Leaving", $"{result.TaxYearOfLeaving}/{result.TaxYearOfLeaving + 1 - 2000:00}");
-        AddLabelValue(ws, row++, "Working Life (Male)", result.WorkingLifeMale, IntFormat);
-        AddLabelValue(ws, row++, "Working Life (Female)", result.WorkingLifeFemale, IntFormat);
+        AddLabelValue(ws, row++, "Revaluation Method", gmp.RevaluationMethod.ToString());
+        AddLabelValue(ws, row++, "Tax Year of Leaving", $"{gmp.TaxYearOfLeaving}/{gmp.TaxYearOfLeaving + 1 - 2000:00}");
+        AddLabelValue(ws, row++, "Working Life (Male)", gmp.WorkingLifeMale, IntFormat);
+        AddLabelValue(ws, row++, "Working Life (Female)", gmp.WorkingLifeFemale, IntFormat);
         row++;
 
         // GMP at leaving
@@ -81,22 +83,22 @@ public static class GmpWorkbookBuilder
         AddHeaderRow(ws, row, "", "Male (pa)", "Male (pw)", "Female (pa)", "Female (pw)");
         row++;
         AddGmpRow(ws, row++, "Pre-88",
-            result.MaleAtLeaving.Pre88Annual, result.MaleAtLeaving.Pre88Weekly,
-            result.FemaleAtLeaving.Pre88Annual, result.FemaleAtLeaving.Pre88Weekly);
+            gmp.MaleAtLeaving.Pre88Annual, gmp.MaleAtLeaving.Pre88Weekly,
+            gmp.FemaleAtLeaving.Pre88Annual, gmp.FemaleAtLeaving.Pre88Weekly);
         AddGmpRow(ws, row++, "Post-88",
-            result.MaleAtLeaving.Post88Annual, result.MaleAtLeaving.Post88Weekly,
-            result.FemaleAtLeaving.Post88Annual, result.FemaleAtLeaving.Post88Weekly);
+            gmp.MaleAtLeaving.Post88Annual, gmp.MaleAtLeaving.Post88Weekly,
+            gmp.FemaleAtLeaving.Post88Annual, gmp.FemaleAtLeaving.Post88Weekly);
         AddGmpRow(ws, row++, "Total",
-            result.MaleAtLeaving.TotalAnnual, result.MaleAtLeaving.TotalWeekly,
-            result.FemaleAtLeaving.TotalAnnual, result.FemaleAtLeaving.TotalWeekly);
+            gmp.MaleAtLeaving.TotalAnnual, gmp.MaleAtLeaving.TotalWeekly,
+            gmp.FemaleAtLeaving.TotalAnnual, gmp.FemaleAtLeaving.TotalWeekly);
         row++;
 
         // Revaluation
         ws.Cell(row, 1).Value = "Revaluation";
         ws.Cell(row, 1).Style.Font.Bold = true;
         row++;
-        AddLabelValue(ws, row++, "Revaluation Factor (Male)", result.RevaluationFactorMale, NumberFormat3Dp);
-        AddLabelValue(ws, row++, "Revaluation Factor (Female)", result.RevaluationFactorFemale, NumberFormat3Dp);
+        AddLabelValue(ws, row++, "Revaluation Factor (Male)", gmp.RevaluationFactorMale, NumberFormat3Dp);
+        AddLabelValue(ws, row++, "Revaluation Factor (Female)", gmp.RevaluationFactorFemale, NumberFormat3Dp);
         row++;
 
         // Revalued GMP
@@ -107,14 +109,33 @@ public static class GmpWorkbookBuilder
         AddHeaderRow(ws, row, "", "Male (pa)", "Male (pw)", "Female (pa)", "Female (pw)");
         row++;
         AddGmpRow(ws, row++, "Pre-88",
-            result.MaleRevalued.Pre88Annual, result.MaleRevalued.Pre88Weekly,
-            result.FemaleRevalued.Pre88Annual, result.FemaleRevalued.Pre88Weekly);
+            gmp.MaleRevalued.Pre88Annual, gmp.MaleRevalued.Pre88Weekly,
+            gmp.FemaleRevalued.Pre88Annual, gmp.FemaleRevalued.Pre88Weekly);
         AddGmpRow(ws, row++, "Post-88",
-            result.MaleRevalued.Post88Annual, result.MaleRevalued.Post88Weekly,
-            result.FemaleRevalued.Post88Annual, result.FemaleRevalued.Post88Weekly);
+            gmp.MaleRevalued.Post88Annual, gmp.MaleRevalued.Post88Weekly,
+            gmp.FemaleRevalued.Post88Annual, gmp.FemaleRevalued.Post88Weekly);
         AddGmpRow(ws, row++, "Total",
-            result.MaleRevalued.TotalAnnual, result.MaleRevalued.TotalWeekly,
-            result.FemaleRevalued.TotalAnnual, result.FemaleRevalued.TotalWeekly);
+            gmp.MaleRevalued.TotalAnnual, gmp.MaleRevalued.TotalWeekly,
+            gmp.FemaleRevalued.TotalAnnual, gmp.FemaleRevalued.TotalWeekly);
+        row++;
+
+        // Barber window
+        ws.Cell(row, 1).Value = "Barber Window";
+        ws.Cell(row, 1).Style.Font.Bold = true;
+        row++;
+        AddLabelValue(ws, row++, "GMP Proportion", gmp.BarberWindowProportion, PercentFormat);
+        AddLabelValue(ws, row++, "Service Proportion", gmp.BarberServiceProportion, PercentFormat);
+        row++;
+
+        // Compensation totals
+        ws.Cell(row, 1).Value = "Compensation";
+        ws.Cell(row, 1).Style.Font.Bold = true;
+        ws.Cell(row, 1).Style.Font.FontSize = 12;
+        row++;
+        AddLabelValue(ws, row++, "Total Compensation", result.TotalCompensation, NumberFormat2Dp);
+        AddLabelValue(ws, row++, "Interest on Arrears", result.InterestOnArrears, NumberFormat2Dp);
+        AddLabelValue(ws, row, "Total with Interest", result.TotalWithInterest, NumberFormat2Dp);
+        ws.Cell(row, 2).Style.Font.Bold = true;
 
         ws.Columns().AdjustToContents();
     }
@@ -245,6 +266,117 @@ public static class GmpWorkbookBuilder
         ws.Columns().AdjustToContents();
     }
 
+    private static void BuildCashFlowSheet(XLWorkbook wb, EqualisationResult result)
+    {
+        var ws = wb.AddWorksheet("Cash Flow");
+        ws.TabColor = XLColor.Teal;
+
+        string[] headers = {
+            "Tax Year",
+            "Status (M)", "Pre-88 GMP (M)", "Post-88 GMP (M)", "Total GMP (M)", "Excess (M)", "Total Pension (M)",
+            "Status (F)", "Pre-88 GMP (F)", "Post-88 GMP (F)", "Total GMP (F)", "Excess (F)", "Total Pension (F)",
+            "Post-88 Inc %", "Excess Inc %"
+        };
+
+        for (int i = 0; i < headers.Length; i++)
+        {
+            var cell = ws.Cell(1, i + 1);
+            cell.Value = headers[i];
+            cell.Style.Font.Bold = true;
+            cell.Style.Fill.BackgroundColor = XLColor.LightGray;
+        }
+
+        int row = 2;
+        foreach (var cf in result.CashFlow)
+        {
+            ws.Cell(row, 1).Value = $"{cf.TaxYear}/{cf.TaxYear + 1 - 2000:00}";
+            ws.Cell(row, 2).Value = cf.StatusMale.ToString();
+            WriteCurrency(ws, row, 3, cf.Pre88GmpMale);
+            WriteCurrency(ws, row, 4, cf.Post88GmpMale);
+            WriteCurrency(ws, row, 5, cf.TotalGmpMale);
+            WriteCurrency(ws, row, 6, cf.ExcessMale);
+            WriteCurrency(ws, row, 7, cf.TotalPensionMale);
+            ws.Cell(row, 8).Value = cf.StatusFemale.ToString();
+            WriteCurrency(ws, row, 9, cf.Pre88GmpFemale);
+            WriteCurrency(ws, row, 10, cf.Post88GmpFemale);
+            WriteCurrency(ws, row, 11, cf.TotalGmpFemale);
+            WriteCurrency(ws, row, 12, cf.ExcessFemale);
+            WriteCurrency(ws, row, 13, cf.TotalPensionFemale);
+            WritePercent(ws, row, 14, cf.Post88GmpIncFactor);
+            WritePercent(ws, row, 15, cf.ExcessIncFactor);
+            row++;
+        }
+
+        // Create Excel table
+        int lastDataRow = row - 1;
+        if (lastDataRow >= 2)
+        {
+            var tableRange = ws.Range(1, 1, lastDataRow, headers.Length);
+            var table = tableRange.CreateTable("CashFlow");
+            table.Theme = XLTableTheme.TableStyleLight16;
+        }
+
+        ws.SheetView.FreezeRows(1);
+        ws.Columns().AdjustToContents();
+    }
+
+    private static void BuildCompensationSheet(XLWorkbook wb, EqualisationResult result)
+    {
+        var ws = wb.AddWorksheet("Compensation");
+        ws.TabColor = XLColor.Purple;
+
+        string[] headers = {
+            "Tax Year", "Actual Cash Flow", "Opp Sex Cash Flow",
+            "Compensation", "Discount Rate", "Discount Factor"
+        };
+
+        for (int i = 0; i < headers.Length; i++)
+        {
+            var cell = ws.Cell(1, i + 1);
+            cell.Value = headers[i];
+            cell.Style.Font.Bold = true;
+            cell.Style.Fill.BackgroundColor = XLColor.LightGray;
+        }
+
+        int row = 2;
+        foreach (var c in result.Compensation)
+        {
+            ws.Cell(row, 1).Value = $"{c.TaxYear}/{c.TaxYear + 1 - 2000:00}";
+            WriteCurrency(ws, row, 2, c.ActualCashFlow);
+            WriteCurrency(ws, row, 3, c.OppSexCashFlow);
+            WriteCurrency(ws, row, 4, c.CompensationCashFlow);
+            WritePercent(ws, row, 5, c.DiscountRate);
+            ws.Cell(row, 6).Value = (double)c.DiscountFactor;
+            ws.Cell(row, 6).Style.NumberFormat.Format = "0.000000";
+            row++;
+        }
+
+        // Totals row
+        int lastDataRow = row - 1;
+        ws.Cell(row, 1).Value = "TOTAL";
+        ws.Cell(row, 1).Style.Font.Bold = true;
+        ws.Cell(row, 4).FormulaA1 = $"SUM(D2:D{lastDataRow})";
+        ws.Cell(row, 4).Style.NumberFormat.Format = NumberFormat2Dp;
+        ws.Cell(row, 4).Style.Font.Bold = true;
+        row += 2;
+
+        // Interest and grand total
+        AddLabelValue(ws, row++, "Interest on Arrears", result.InterestOnArrears, NumberFormat2Dp);
+        AddLabelValue(ws, row, "Total with Interest", result.TotalWithInterest, NumberFormat2Dp);
+        ws.Cell(row, 2).Style.Font.Bold = true;
+
+        // Create Excel table
+        if (lastDataRow >= 2)
+        {
+            var tableRange = ws.Range(1, 1, lastDataRow, headers.Length);
+            var table = tableRange.CreateTable("Compensation");
+            table.Theme = XLTableTheme.TableStyleLight21;
+        }
+
+        ws.SheetView.FreezeRows(1);
+        ws.Columns().AdjustToContents();
+    }
+
     private static void AddLabelValue(IXLWorksheet ws, int row, string label, string value)
     {
         ws.Cell(row, 1).Value = label;
@@ -302,5 +434,17 @@ public static class GmpWorkbookBuilder
         ws.Cell(row, 6).Style.NumberFormat.Format = NumberFormat2Dp;
         ws.Cell(row, 7).Value = (double)b.TotalWeekly;
         ws.Cell(row, 7).Style.NumberFormat.Format = NumberFormat2Dp;
+    }
+
+    private static void WriteCurrency(IXLWorksheet ws, int row, int col, decimal value)
+    {
+        ws.Cell(row, col).Value = (double)value;
+        ws.Cell(row, col).Style.NumberFormat.Format = NumberFormat2Dp;
+    }
+
+    private static void WritePercent(IXLWorksheet ws, int row, int col, decimal value)
+    {
+        ws.Cell(row, col).Value = (double)value;
+        ws.Cell(row, col).Style.NumberFormat.Format = PercentFormat;
     }
 }

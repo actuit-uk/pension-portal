@@ -16,6 +16,15 @@ namespace PensionPortal.CalcLib;
 /// For tax years up to 1987: contracted-out NI contributions.
 /// For tax years 1988–1997: band earnings.
 /// </param>
+/// <param name="PensionAtLeaving">
+/// Total scheme pension at date of leaving (per annum), if known.
+/// Tier 1 for excess calculation: excess = PensionAtLeaving - TotalGMP.
+/// </param>
+/// <param name="FinalPensionableSalary">
+/// Final pensionable salary at leaving, if known.
+/// Tier 2 fallback for excess calculation when PensionAtLeaving is not available:
+/// estimated total pension = salary × pensionable service ÷ accrual denominator.
+/// </param>
 public record MemberData(
     Sex Sex,
     DateTime DateOfBirth,
@@ -24,4 +33,6 @@ public record MemberData(
     DateTime DateOfLeaving,
     DateTime? DateOfRetirement,
     DateTime? DateOfDeath,
-    IReadOnlyDictionary<int, decimal> Earnings);
+    IReadOnlyDictionary<int, decimal> Earnings,
+    decimal? PensionAtLeaving = null,
+    decimal? FinalPensionableSalary = null);

@@ -35,4 +35,11 @@ public interface IFactorProvider
     /// Returns null if no rate is available for that year.
     /// </summary>
     decimal? GetDiscountRate(int taxYear);
+
+    /// <summary>
+    /// Returns the Bank of England base rate for the given tax year,
+    /// used for interest on arrears calculations (base rate + 1%).
+    /// Returns null if no rate is available for that year.
+    /// </summary>
+    decimal? GetBaseRate(int taxYear);
 }

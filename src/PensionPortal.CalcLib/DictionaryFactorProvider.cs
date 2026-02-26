@@ -11,6 +11,7 @@ public class DictionaryFactorProvider : IFactorProvider
     private readonly List<(int fromYear, int toYear, decimal rate)> _fixedRates = new();
     private readonly Dictionary<(PipIncreaseMethod method, int year), decimal> _pipFactors = new();
     private readonly Dictionary<int, decimal> _discountRates = new();
+    private readonly Dictionary<int, decimal> _baseRates = new();
 
     /// <summary>
     /// Adds an earnings revaluation factor.
@@ -43,6 +44,14 @@ public class DictionaryFactorProvider : IFactorProvider
     public void AddDiscountRate(int taxYear, decimal rate)
     {
         _discountRates[taxYear] = rate;
+    }
+
+    /// <summary>
+    /// Adds a Bank of England base rate for a tax year.
+    /// </summary>
+    public void AddBaseRate(int taxYear, decimal rate)
+    {
+        _baseRates[taxYear] = rate;
     }
 
     /// <inheritdoc />
@@ -79,6 +88,14 @@ public class DictionaryFactorProvider : IFactorProvider
     public decimal? GetDiscountRate(int taxYear)
     {
         return _discountRates.TryGetValue(taxYear, out var value)
+            ? value
+            : null;
+    }
+
+    /// <inheritdoc />
+    public decimal? GetBaseRate(int taxYear)
+    {
+        return _baseRates.TryGetValue(taxYear, out var value)
             ? value
             : null;
     }

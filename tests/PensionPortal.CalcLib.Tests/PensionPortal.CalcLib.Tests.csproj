@@ -22,6 +22,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\PensionPortal.CalcLib\PensionPortal.CalcLib.csproj" />
+    <ProjectReference Include="..\..\src\PensionPortal.CalcLib.Export\PensionPortal.CalcLib.Export.csproj" />
   </ItemGroup>
 
 </Project>

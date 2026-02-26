@@ -12,28 +12,51 @@ public static class GmpCalculator
 
     /// <summary>
     /// Runs the full GMP equalisation pipeline: GMP calculation, cash flow projection,
-    /// and compensation calculation, returning a complete EqualisationResult.
+    /// compensation calculation, and optional interest on arrears.
     /// </summary>
     /// <param name="member">Member data including earnings history.</param>
-    /// <param name="revMethod">The GMP revaluation method to use.</param>
+    /// <param name="scheme">Scheme configuration (NRA ages, accrual, PIP method, assumptions).</param>
     /// <param name="factors">Factor provider for all lookups.</param>
-    /// <param name="assumptions">Future projection assumptions.</param>
+    /// <param name="settlementDate">Optional settlement date for interest on arrears. If null, interest is zero.</param>
     public static EqualisationResult Calculate(
         MemberData member,
-        GmpRevaluationMethod revMethod,
+        SchemeConfig scheme,
         IFactorProvider factors,
-        FutureAssumptions assumptions)
+        DateTime? settlementDate = null)
     {
-        var gmp = CalculateGmp(member, revMethod, factors);
-        var cashFlow = CashFlowBuilder.Build(gmp, member, factors, assumptions);
+        var gmp = CalculateGmp(member, scheme.GmpRevMethod, factors);
+        var rawCashFlow = CashFlowBuilder.Build(gmp, member, scheme, factors);
+
+        // Apply anti-franking floor if enabled
+        IReadOnlyList<CashFlowEntry> cashFlow = rawCashFlow;
+        if (scheme.AntiFrankingApplies)
+        {
+            var (excessM, excessF) = ExcessPensionCalculator.Calculate(
+                member, scheme, gmp.MaleAtLeaving.TotalAnnual, gmp.FemaleAtLeaving.TotalAnnual);
+            cashFlow = AntiFrankingCalculator.ApplyFloor(
+                rawCashFlow, gmp, excessM, excessF, factors, scheme.Assumptions);
+        }
+
         var (compensation, total) = CompensationCalculator.Calculate(
-            cashFlow, member.Sex, factors, assumptions);
+            cashFlow, member.Sex, scheme, factors,
+            gmp.BarberWindowProportion, gmp.BarberServiceProportion);
+
+        decimal interest = 0m;
+        if (settlementDate.HasValue)
+        {
+            int settlementTaxYear = TaxYearHelper.TaxYearFromDate(settlementDate.Value);
+            interest = InterestCalculator.Calculate(
+                compensation, settlementTaxYear, factors,
+                scheme.Assumptions.FutureDiscountRate);
+        }
 
         return new EqualisationResult(
             Gmp: gmp,
             CashFlow: cashFlow,
             Compensation: compensation,
-            TotalCompensation: total);
+            TotalCompensation: total,
+            InterestOnArrears: interest,
+            TotalWithInterest: total + interest);
     }
 
     /// <summary>
@@ -118,6 +141,11 @@ public static class GmpCalculator
             Post88Weekly: revaluedTotalFpw - revaluedPre88Fpw,
             TotalWeekly: revaluedTotalFpw);
 
+        // Barber window proportions
+        decimal barberProportion = BarberWindow.CalculateProportion(details);
+        decimal barberServiceProp = BarberWindow.CalculateServiceProportion(
+            member.DateCOStart, member.DateOfLeaving);
+
         return new GmpResult(
             WorkingLifeMale: workingLifeM,
             WorkingLifeFemale: workingLifeF,
@@ -129,6 +157,8 @@ public static class GmpCalculator
             RevaluationMethod: revMethod,
             RevaluationFactorMale: Math.Round(revFactorM, 3),
             RevaluationFactorFemale: Math.Round(revFactorF, 3),
+            BarberWindowProportion: barberProportion,
+            BarberServiceProportion: barberServiceProp,
             TaxYearDetails: details.AsReadOnly());
     }
 

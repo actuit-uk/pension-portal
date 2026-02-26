@@ -13,7 +13,7 @@ public class CashFlowBuilderTests
     private static IReadOnlyList<CashFlowEntry> BuildCase4CashFlow()
     {
         var gmp = GetCase4Gmp();
-        return CashFlowBuilder.Build(gmp, Case4Data.Member, Case4Data.CreateFactors(), Case4Data.Assumptions);
+        return CashFlowBuilder.Build(gmp, Case4Data.Member, Case4Data.Scheme, Case4Data.CreateFactors());
     }
 
     [Fact]
