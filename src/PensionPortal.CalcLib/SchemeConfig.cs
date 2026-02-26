@@ -12,6 +12,7 @@ namespace PensionPortal.CalcLib;
 /// <param name="PipMethod">Which pension increase table to use for excess pension.</param>
 /// <param name="GmpRevMethod">GMP revaluation method.</param>
 /// <param name="Assumptions">Future projection assumptions.</param>
+/// <param name="IncreaseMethod">How pension increases are applied once in payment (Separate or Overall).</param>
 /// <param name="AntiFrankingApplies">Whether to apply the anti-franking floor to the cash flow. Anti-franking prevents excess pension from being reduced to offset GMP revaluation increases. Only material with the overall increase method; has no effect with the separate increase method.</param>
 public record SchemeConfig(
     int PreEqNraMale,
@@ -22,4 +23,5 @@ public record SchemeConfig(
     PipIncreaseMethod PipMethod,
     GmpRevaluationMethod GmpRevMethod,
     FutureAssumptions Assumptions,
+    PensionIncreaseMethod IncreaseMethod = PensionIncreaseMethod.Separate,
     bool AntiFrankingApplies = false);

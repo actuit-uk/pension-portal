@@ -59,7 +59,12 @@ Key types:
 4. **Compensation Calculation** — compares actual vs opposite-sex total pension (GMP + excess) from second PIP year onwards. Barber window proportions restrict comparison to equalisation-relevant service
 5. **Interest on Arrears** (optional) — simple interest at BoE base rate + 1% on positive past compensation from each year to settlement date
 
-The compensation uses the "separate increase" method: pre-88 GMP stays flat, post-88 GMP increases at CPI capped at 3% (the statutory GMP Increase Order rate), excess pension increases at scheme PIP rate. Compensation accrues from the second PIP year for each sex (the first PIP year establishes the base before any increases apply). Signed differences (C2-style) allow years where the actual sex is better to offset years where the opposite sex is better.
+Two pension increase methods are supported (configured via `SchemeConfig.IncreaseMethod`):
+
+- **Separate** (default): each component increases independently — pre-88 GMP stays flat, post-88 GMP increases at LPI3 (statutory), excess increases at scheme PIP rate. Anti-franking is a no-op because excess is never reduced by GMP increases.
+- **Overall**: the scheme applies one rate to the total pension, then tests the GMP floor (pre-88 flat + post-88 at LPI3). Excess is the residual and can erode to zero if the scheme rate is lower than the effective GMP increase rate. Anti-franking becomes material under this method.
+
+Compensation accrues from the second PIP year for each sex (the first PIP year establishes the base before any increases apply). Signed differences (C2-style) allow years where the actual sex is better to offset years where the opposite sex is better.
 
 #### Excess Pension
 
@@ -71,7 +76,7 @@ Excess pension (total scheme pension minus GMP) uses a three-tier fallback:
 
 ### Methodology Status
 
-The engine covers the full C2 methodology: GMP calculation with Section 148 revaluation, excess pension, Barber window isolation, anti-franking, interest on arrears, and LPI3/LPI5 increase methods. Remaining gaps: FixedRate/LimitedRate revaluation (Issue #5), overall increase method (Issue #5). PASA reference PDFs are in `wwwroot/docs/`.
+The engine covers the full C2 methodology: GMP calculation with Section 148 revaluation, excess pension, Barber window isolation, anti-franking, interest on arrears, separate and overall pension increase methods, and LPI3/LPI5 increase rates. Remaining gap: FixedRate/LimitedRate GMP revaluation (Issue #5). PASA reference PDFs are in `wwwroot/docs/`.
 
 ### Excel Export (CalcLib.Export)
 

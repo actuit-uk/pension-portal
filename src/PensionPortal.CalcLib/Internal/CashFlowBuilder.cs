@@ -2,10 +2,15 @@ namespace PensionPortal.CalcLib.Internal;
 
 /// <summary>
 /// Builds the year-by-year pension cash flow projection from GMP results.
-/// Uses the separate increase method: pre-88 GMP stays flat, post-88 GMP
-/// increases at LPI3 (CPI capped at 3%) once in payment.
-/// Excess pension is computed via ExcessPensionCalculator (three-tier fallback)
-/// and increases at the scheme PIP rate once in payment.
+/// Supports two increase methods (via SchemeConfig.IncreaseMethod):
+///
+/// Separate: each component increases independently — pre-88 GMP stays flat,
+/// post-88 GMP increases at LPI3, excess increases at the scheme PIP rate.
+///
+/// Overall: the scheme applies one rate (scheme PIP) to the total pension.
+/// The GMP floor is then tested (pre-88 flat + post-88 at LPI3 statutory).
+/// If the total pension falls below the GMP floor, it is topped up.
+/// Excess is the residual (total minus GMP) and can erode to zero.
 /// </summary>
 internal static class CashFlowBuilder
 {
@@ -45,6 +50,12 @@ internal static class CashFlowBuilder
         bool femaleEnteredPip = false;
         decimal prevFactor = 0m;
         decimal prevExcessFactor = 0m;
+
+        // Overall method: running total pension (GMP + excess), increases at scheme PIP rate.
+        // Initialised to 0 as a sentinel — set on first PIP year.
+        bool isOverall = scheme.IncreaseMethod == PensionIncreaseMethod.Overall;
+        decimal runningTotalM = 0m;
+        decimal runningTotalF = 0m;
 
         for (int year = startYear; year <= endYear; year++)
         {
@@ -107,25 +118,41 @@ internal static class CashFlowBuilder
             decimal totalM = Math.Round(pre88M + post88M, 2);
             decimal totalF = Math.Round(pre88F + post88F, 2);
 
-            // Excess pension: flat until PIP, then increases at scheme PIP rate
+            // Excess pension computation depends on increase method
             decimal excessM, excessF;
-            if (statusM != GmpStatus.InPayment || !maleEnteredPip)
+
+            if (isOverall)
             {
-                excessM = excessAtLeavingM;
+                // Overall method: apply scheme PIP rate to total pension, then test GMP floor.
+                // Excess is the residual (total pension minus GMP components).
+                excessM = OverallExcess(
+                    statusM, totalM, excessAtLeavingM,
+                    ref runningTotalM, prevExcessFactor);
+                excessF = OverallExcess(
+                    statusF, totalF, excessAtLeavingF,
+                    ref runningTotalF, prevExcessFactor);
             }
             else
             {
-                excessM = Math.Round(runningExcessM * (1m + prevExcessFactor), 2);
-                runningExcessM = excessM;
-            }
-            if (statusF != GmpStatus.InPayment || !femaleEnteredPip)
-            {
-                excessF = excessAtLeavingF;
-            }
-            else
-            {
-                excessF = Math.Round(runningExcessF * (1m + prevExcessFactor), 2);
-                runningExcessF = excessF;
+                // Separate method: excess increases independently at scheme PIP rate
+                if (statusM != GmpStatus.InPayment || !maleEnteredPip)
+                {
+                    excessM = excessAtLeavingM;
+                }
+                else
+                {
+                    excessM = Math.Round(runningExcessM * (1m + prevExcessFactor), 2);
+                    runningExcessM = excessM;
+                }
+                if (statusF != GmpStatus.InPayment || !femaleEnteredPip)
+                {
+                    excessF = excessAtLeavingF;
+                }
+                else
+                {
+                    excessF = Math.Round(runningExcessF * (1m + prevExcessFactor), 2);
+                    runningExcessF = excessF;
+                }
             }
 
             entries.Add(new CashFlowEntry(
@@ -150,6 +177,41 @@ internal static class CashFlowBuilder
         }
 
         return entries.AsReadOnly();
+    }
+
+    /// <summary>
+    /// Computes excess pension under the overall increase method for one sex in one year.
+    /// The total pension increases at the scheme PIP rate. If the total falls below the
+    /// GMP floor (pre-88 flat + post-88 at LPI3), it is topped up. Excess is the residual.
+    /// </summary>
+    /// <param name="status">GMP status this year (Exit, Deferred, InPayment).</param>
+    /// <param name="totalGmp">Total GMP this year (pre-88 + post-88, already computed).</param>
+    /// <param name="excessAtLeaving">Excess pension at date of leaving.</param>
+    /// <param name="runningTotal">Running total pension (updated by reference).</param>
+    /// <param name="prevSchemeFactor">The scheme PIP factor from the previous year.</param>
+    private static decimal OverallExcess(
+        GmpStatus status, decimal totalGmp, decimal excessAtLeaving,
+        ref decimal runningTotal, decimal prevSchemeFactor)
+    {
+        if (status != GmpStatus.InPayment)
+            return excessAtLeaving;
+
+        if (runningTotal == 0m)
+        {
+            // First PIP year: total pension = revalued GMP + excess at leaving
+            runningTotal = totalGmp + excessAtLeaving;
+            return excessAtLeaving;
+        }
+
+        // Subsequent PIP years: increase total pension at scheme PIP rate
+        runningTotal = Math.Round(runningTotal * (1m + prevSchemeFactor), 2);
+
+        // GMP floor test: total pension must be at least the GMP entitlement
+        if (runningTotal < totalGmp)
+            runningTotal = totalGmp;
+
+        // Excess is the residual above GMP (floored at zero)
+        return Math.Max(0m, Math.Round(runningTotal - totalGmp, 2));
     }
 
     /// <summary>

@@ -43,16 +43,23 @@ Key timing issue: the anti-franking test is carried out at GMP payable age, whic
 - **Pre-2016 State Pension age**: Where the scheme didn't provide the full increase on GMP, the state topped up via the Additional State Pension.
 - **Post-2016 State Pension age**: This top-up mechanism no longer exists. The scheme's obligation remains, but any CPI increase above the 3% cap on post-88 GMP is not covered by anyone — a known gap in the legislation.
 
-## Implications for CalcLib Design
+## CalcLib Implementation
 
-The `CashFlowEntry` record tracks Pre88/Post88/Excess/Total separately per sex, which supports both methods:
+Both methods are implemented in `CashFlowBuilder` and selected via `SchemeConfig.IncreaseMethod` (a `PensionIncreaseMethod` enum: `Separate` or `Overall`). Default is `Separate`.
 
-- **Separate method**: Each component calculated independently — straightforward.
-- **Overall method**: Total pension increased first, then GMP floor tested, excess derived as remainder.
+The `CashFlowEntry` record tracks Pre88/Post88/Excess/Total separately per sex, supporting both methods with the same data structure:
 
-The `SchemeConfig` record should include which method the scheme uses. Default to **separate** (simpler, more conservative, most common).
+- **Separate method**: Each component increases independently at its own rate. GMP components follow statutory rules; excess follows the scheme PIP rate.
+- **Overall method**: The `OverallExcess()` helper applies the scheme PIP rate to the running total pension, then tests the GMP floor (pre-88 flat + post-88 at LPI3 statutory). Excess is derived as `max(0, total pension - total GMP)`. A sentinel check (`runningTotal == 0`) detects the first PIP year since the `enteredPip` flag is already set by the GMP computation block.
 
-The data model is the same either way — only the CashFlowBuilder arithmetic changes.
+Key behaviours verified by tests (115 passing):
+
+- GMP components (pre-88, post-88) are identical regardless of increase method
+- Under overall with a low scheme rate, excess erodes year-over-year
+- The GMP floor prevents total pension from falling below GMP entitlement
+- Excess is never negative
+- Under overall with the same rate as LPI3, excess does not erode (rate applied to larger base)
+- Under separate, excess of zero stays zero; under overall, it can become positive
 
 ## Sources
 
