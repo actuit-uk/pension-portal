@@ -99,4 +99,62 @@ public class DictionaryFactorProvider : IFactorProvider
             ? value
             : null;
     }
+
+    // --- Factor table export (for CSV/JSON bridge to stochastic engine) ---
+
+    /// <summary>
+    /// Returns all S148 earnings revaluation factors as (taxYearOfEarnings, taxYearOfCalculation, percentage) tuples.
+    /// </summary>
+    public IReadOnlyList<(int TaxYearOfEarnings, int TaxYearOfCalculation, decimal Percentage)> GetAllEarningsFactors()
+    {
+        return _earningsFactors
+            .Select(kv => (kv.Key.from, kv.Key.to, kv.Value))
+            .OrderBy(x => x.from).ThenBy(x => x.to)
+            .ToList()
+            .AsReadOnly();
+    }
+
+    /// <summary>
+    /// Returns all fixed revaluation rate bands as (fromYear, toYear, rate) tuples.
+    /// </summary>
+    public IReadOnlyList<(int FromYear, int ToYear, decimal Rate)> GetAllFixedRates()
+    {
+        return _fixedRates.AsReadOnly();
+    }
+
+    /// <summary>
+    /// Returns all PIP increase factors as (method, taxYear, factor) tuples.
+    /// </summary>
+    public IReadOnlyList<(PipIncreaseMethod Method, int TaxYear, decimal Factor)> GetAllPipFactors()
+    {
+        return _pipFactors
+            .Select(kv => (kv.Key.method, kv.Key.year, kv.Value))
+            .OrderBy(x => x.method).ThenBy(x => x.year)
+            .ToList()
+            .AsReadOnly();
+    }
+
+    /// <summary>
+    /// Returns all discount rates as (taxYear, rate) tuples.
+    /// </summary>
+    public IReadOnlyList<(int TaxYear, decimal Rate)> GetAllDiscountRates()
+    {
+        return _discountRates
+            .Select(kv => (kv.Key, kv.Value))
+            .OrderBy(x => x.Key)
+            .ToList()
+            .AsReadOnly();
+    }
+
+    /// <summary>
+    /// Returns all base rates as (taxYear, rate) tuples.
+    /// </summary>
+    public IReadOnlyList<(int TaxYear, decimal Rate)> GetAllBaseRates()
+    {
+        return _baseRates
+            .Select(kv => (kv.Key, kv.Value))
+            .OrderBy(x => x.Key)
+            .ToList()
+            .AsReadOnly();
+    }
 }

@@ -90,6 +90,46 @@ public class GmpCalculatorTests
     }
 
     [Fact]
+    public void Case4_PipStartYears_Correct()
+    {
+        var result = GmpCalculator.CalculateGmp(
+            Case4Data.Member, GmpRevaluationMethod.Section148, Case4Data.CreateFactors());
+
+        // DOB 29 Dec 1951: male age 65 = 29 Dec 2016 → tax year 2016
+        Assert.Equal(2016, result.PipStartYearMale);
+        // Female age 60 = 29 Dec 2011 → tax year 2011
+        Assert.Equal(2011, result.PipStartYearFemale);
+    }
+
+    [Fact]
+    public void PipStartYear_PublicMethod_MatchesResult()
+    {
+        // Public method should give same answer as GmpResult fields
+        int pipM = GmpCalculator.PipStartYear(Case4Data.Member.DateOfBirth, 65);
+        int pipF = GmpCalculator.PipStartYear(Case4Data.Member.DateOfBirth, 60);
+
+        var result = GmpCalculator.CalculateGmp(
+            Case4Data.Member, GmpRevaluationMethod.Section148, Case4Data.CreateFactors());
+
+        Assert.Equal(result.PipStartYearMale, pipM);
+        Assert.Equal(result.PipStartYearFemale, pipF);
+    }
+
+    [Fact]
+    public void FactorExport_ReturnsPopulatedData()
+    {
+        var factors = Case4Data.CreateFactors();
+
+        var earnings = factors.GetAllEarningsFactors();
+        Assert.True(earnings.Count > 0);
+        Assert.Contains(earnings, e => e.TaxYearOfEarnings == 1987 && e.Percentage == 149.5m);
+
+        var pip = factors.GetAllPipFactors();
+        Assert.True(pip.Count > 0);
+        Assert.Contains(pip, p => p.Method == PipIncreaseMethod.LPI3 && p.TaxYear == 2019 && p.Factor == 0.024m);
+    }
+
+    [Fact]
     public void Case4_FullPipeline_ReturnsEqualisationResult()
     {
         var result = GmpCalculator.Calculate(

@@ -27,8 +27,8 @@ internal static class CashFlowBuilder
         int endYear = assumptions.ProjectionEndYear;
 
         // Determine PIP start years (tax year in which GMP payable age is reached)
-        int malePipYear = PipStartYear(member.DateOfBirth, 65);
-        int femalePipYear = PipStartYear(member.DateOfBirth, 60);
+        int malePipYear = GmpCalculator.PipStartYear(member.DateOfBirth, 65);
+        int femalePipYear = GmpCalculator.PipStartYear(member.DateOfBirth, 60);
 
         // Excess pension above GMP (three-tier: direct, salary-based, or zero)
         var (excessAtLeavingM, excessAtLeavingF) = ExcessPensionCalculator.Calculate(
@@ -164,13 +164,4 @@ internal static class CashFlowBuilder
         return GmpStatus.InPayment;
     }
 
-    /// <summary>
-    /// Returns the tax year in which GMP payable age is reached.
-    /// </summary>
-    private static int PipStartYear(DateTime dateOfBirth, int gmpAge)
-    {
-        int gmpAgeYear = dateOfBirth.Year + gmpAge;
-        var gmpAgeDate = new DateTime(gmpAgeYear, dateOfBirth.Month, dateOfBirth.Day);
-        return TaxYearHelper.TaxYearFromDate(gmpAgeDate);
-    }
 }

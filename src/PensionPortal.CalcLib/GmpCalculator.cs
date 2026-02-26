@@ -146,6 +146,10 @@ public static class GmpCalculator
         decimal barberServiceProp = BarberWindow.CalculateServiceProportion(
             member.DateCOStart, member.DateOfLeaving);
 
+        // PIP start years
+        int pipStartM = PipStartYear(member.DateOfBirth, MaleGmpAge);
+        int pipStartF = PipStartYear(member.DateOfBirth, FemaleGmpAge);
+
         return new GmpResult(
             WorkingLifeMale: workingLifeM,
             WorkingLifeFemale: workingLifeF,
@@ -159,6 +163,8 @@ public static class GmpCalculator
             RevaluationFactorFemale: Math.Round(revFactorF, 3),
             BarberWindowProportion: barberProportion,
             BarberServiceProportion: barberServiceProp,
+            PipStartYearMale: pipStartM,
+            PipStartYearFemale: pipStartF,
             TaxYearDetails: details.AsReadOnly());
     }
 
@@ -180,6 +186,18 @@ public static class GmpCalculator
             Pre88Weekly: pre88Weekly,
             Post88Weekly: post88Weekly,
             TotalWeekly: totalWeekly);
+    }
+
+    /// <summary>
+    /// Returns the tax year in which GMP payable age is reached (first year of pension-in-payment).
+    /// </summary>
+    /// <param name="dateOfBirth">Member's date of birth.</param>
+    /// <param name="gmpAge">GMP payable age (65 for male, 60 for female).</param>
+    public static int PipStartYear(DateTime dateOfBirth, int gmpAge)
+    {
+        int gmpAgeYear = dateOfBirth.Year + gmpAge;
+        var gmpAgeDate = new DateTime(gmpAgeYear, dateOfBirth.Month, dateOfBirth.Day);
+        return TaxYearHelper.TaxYearFromDate(gmpAgeDate);
     }
 
     /// <summary>

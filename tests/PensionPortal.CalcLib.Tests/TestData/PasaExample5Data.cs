@@ -103,6 +103,8 @@ public static class PasaExample5Data
             RevaluationFactorFemale: 1.525m,
             BarberWindowProportion: Expected.BarberGmpProportion,
             BarberServiceProportion: barberServiceProp,
+            PipStartYearMale: GmpCalculator.PipStartYear(Member.DateOfBirth, 65),
+            PipStartYearFemale: GmpCalculator.PipStartYear(Member.DateOfBirth, 60),
             TaxYearDetails: new List<TaxYearDetail>().AsReadOnly());
     }
 
