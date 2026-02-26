@@ -56,7 +56,11 @@ Key types:
 2. **Cash Flow Projection** — year-by-year pension from leaving to projection end, with post-88 LPI3 increases
 3. **Compensation Calculation** — compares actual vs opposite-sex post-88 GMP from second PIP year onwards
 
-The compensation uses the "separate increase" method: pre-88 GMP stays flat, post-88 GMP increases at CPI capped at 3% (the statutory GMP Increase Order rate). Compensation accrues from the second PIP year for each sex (the first PIP year establishes the base before any increases apply).
+The compensation uses the "separate increase" method: pre-88 GMP stays flat, post-88 GMP increases at CPI capped at 3% (the statutory GMP Increase Order rate). Compensation accrues from the second PIP year for each sex (the first PIP year establishes the base before any increases apply). Signed differences (C2-style) allow years where the actual sex is better to offset years where the opposite sex is better.
+
+### Methodology Status
+
+The current engine covers GMP-only cases with Section 148 revaluation. See [issue #6](https://github.com/actuit-uk/pension-portal/issues/6) for the remaining methodology gaps: excess pension in the comparison, overall increase method, Barber window proportion, anti-franking, interest on arrears, and discounting. PASA reference PDFs are in `wwwroot/docs/`.
 
 ### Excel Export (CalcLib.Export)
 
