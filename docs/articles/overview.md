@@ -23,16 +23,17 @@ The project has two calculation layers:
 ```
 pension-portal/
 ├── src/
-│   ├── PensionPortal.Web/          ASP.NET Core MVC app
-│   │   ├── Controllers/            MVC controllers
-│   │   ├── Views/                  Razor views
-│   │   ├── Services/               DatabaseService
-│   │   └── Docs/                   Markdown articles (in-app)
-│   └── PensionPortal.CalcLib/      Calculation library
-│       └── Internal/               Internal calculator helpers
+│   ├── PensionPortal.Web/              ASP.NET Core MVC app
+│   │   ├── Controllers/                MVC controllers
+│   │   ├── Views/                      Razor views
+│   │   ├── Services/                   DatabaseService
+│   │   └── Docs/                       Markdown articles (in-app)
+│   ├── PensionPortal.CalcLib/          Calculation library
+│   │   └── Internal/                   Internal calculator helpers
+│   └── PensionPortal.CalcLib.Export/   Excel export (ClosedXML)
 ├── tests/
-│   └── PensionPortal.CalcLib.Tests/ xUnit test project
-├── sql/                            Database creation scripts
-├── docs/                           DocFX documentation (this site)
-└── data/                           Sample CSV files
+│   └── PensionPortal.CalcLib.Tests/    xUnit test project
+├── sql/                                Database creation scripts
+├── docs/                               DocFX documentation (this site)
+└── data/                               Sample CSV files
 ```

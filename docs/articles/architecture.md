@@ -41,8 +41,14 @@ Key types:
 - **`GmpCalculator`** — public entry point for GMP and equalisation calculations
 - **`MemberData`** — immutable record of member inputs (sex, DOB, earnings history)
 - **`IFactorProvider`** / **`DictionaryFactorProvider`** — factor abstraction with in-memory implementation
-- **`GmpResult`** — calculation output with pre/post-88 GMP splits for both sexes
-- Internal helpers: `WorkingLife`, `TaxYearGmp`, `Revaluation` — mirror the principles from the legacy GMPEQ stored procedures but as clean, tested C#
+- **`GmpResult`** — calculation output with pre/post-88 GMP splits for both sexes, plus `TaxYearDetails` audit trail
+- **`TaxYearDetail`** — per-tax-year intermediate values (earnings, divisor, accrual rate, S148 factor, revalued earnings, raw GMP)
+- **`CashFlowEntry`** — year-by-year pension projection tracking GMP components, excess, and total pension for both sexes with GMP status transitions (Exit → Deferred → InPayment)
+- Internal helpers: `WorkingLife`, `TaxYearGmp`, `Revaluation`, `CashFlowBuilder` — mirror the principles from the legacy GMPEQ stored procedures but as clean, tested C#
+
+### Excel Export (CalcLib.Export)
+
+The `PensionPortal.CalcLib.Export` project uses ClosedXML to produce multi-sheet Excel workbooks from calculation results. Follows the appcore pattern of formatted tables with frozen panes and type-aware number formats. Sheets: Summary, Tax Year Detail (audit trail), GMP at Leaving, GMP Revalued.
 
 ## Deployment
 

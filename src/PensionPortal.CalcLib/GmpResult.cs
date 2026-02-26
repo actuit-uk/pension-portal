@@ -2,7 +2,7 @@ namespace PensionPortal.CalcLib;
 
 /// <summary>
 /// Complete GMP calculation result including at-leaving and revalued amounts
-/// for both male and female.
+/// for both male and female, plus per-tax-year audit trail.
 /// </summary>
 /// <param name="WorkingLifeMale">Working life in years for male GMP calculation.</param>
 /// <param name="WorkingLifeFemale">Working life in years for female GMP calculation.</param>
@@ -14,6 +14,7 @@ namespace PensionPortal.CalcLib;
 /// <param name="RevaluationMethod">The revaluation method used.</param>
 /// <param name="RevaluationFactorMale">Revaluation factor applied to male GMP.</param>
 /// <param name="RevaluationFactorFemale">Revaluation factor applied to female GMP.</param>
+/// <param name="TaxYearDetails">Per-tax-year audit trail of intermediate calculation values.</param>
 public record GmpResult(
     int WorkingLifeMale,
     int WorkingLifeFemale,
@@ -24,4 +25,5 @@ public record GmpResult(
     GmpBreakdown FemaleRevalued,
     GmpRevaluationMethod RevaluationMethod,
     decimal RevaluationFactorMale,
-    decimal RevaluationFactorFemale);
+    decimal RevaluationFactorFemale,
+    IReadOnlyList<TaxYearDetail> TaxYearDetails);

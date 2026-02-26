@@ -42,7 +42,7 @@ internal static class TaxYearGmp
 
     /// <summary>
     /// Calculates the raw GMP contribution from a single tax year's earnings
-    /// for both male and female working lives.
+    /// for both male and female working lives, returning a full audit trail.
     /// </summary>
     /// <param name="earningsOrNICs">The earnings (post-87) or contracted-out NICs (pre-88) for this tax year.</param>
     /// <param name="taxYearOfEarnings">The tax year the earnings relate to.</param>
@@ -50,8 +50,8 @@ internal static class TaxYearGmp
     /// <param name="workingLifeMale">Working life in years for male calculation.</param>
     /// <param name="workingLifeFemale">Working life in years for female calculation.</param>
     /// <param name="factors">Factor provider for S148 earnings revaluation lookup.</param>
-    /// <returns>Tuple of (male GMP, female GMP) as annual amounts for this tax year.</returns>
-    internal static (decimal male, decimal female) Calculate(
+    /// <returns>TaxYearDetail with all intermediate values and male/female GMP contributions.</returns>
+    internal static TaxYearDetail Calculate(
         decimal earningsOrNICs,
         int taxYearOfEarnings,
         int taxYearOfCalculation,
@@ -60,14 +60,27 @@ internal static class TaxYearGmp
         IFactorProvider factors)
     {
         if (earningsOrNICs <= 0)
-            return (0m, 0m);
+        {
+            return new TaxYearDetail(
+                TaxYear: taxYearOfEarnings,
+                EarningsOrNICs: earningsOrNICs,
+                IsNICs: taxYearOfEarnings <= LastNIContributionYear,
+                IsPre88: IsPre88(taxYearOfEarnings),
+                Divisor: taxYearOfEarnings <= LastNIContributionYear ? NiDivisor : 1.0m,
+                AccrualRate: IsPre88(taxYearOfEarnings) ? Pre88AccrualRate : Post88AccrualRate,
+                S148FactorPct: 0m,
+                RevaluedEarnings: 0m,
+                RawGmpMale: 0m,
+                RawGmpFemale: 0m);
+        }
 
         // NI contributions use the NI divisor; band earnings (from 1988) pass through at 1.0
         bool isNICs = taxYearOfEarnings <= LastNIContributionYear;
         decimal divisor = isNICs ? NiDivisor : 1.0m;
 
         // Accrual rate: 25% for years up to and including 1988, 20% from 1989
-        decimal accrualRate = IsPre88(taxYearOfEarnings) ? Pre88AccrualRate : Post88AccrualRate;
+        bool isPre88 = IsPre88(taxYearOfEarnings);
+        decimal accrualRate = isPre88 ? Pre88AccrualRate : Post88AccrualRate;
 
         // Look up S148 earnings revaluation factor
         decimal earningsFactor = factors.GetEarningsRevaluationFactor(
@@ -83,6 +96,16 @@ internal static class TaxYearGmp
         decimal gmpMale = revaluedEarnings * accrualRate / workingLifeMale;
         decimal gmpFemale = revaluedEarnings * accrualRate / workingLifeFemale;
 
-        return (gmpMale, gmpFemale);
+        return new TaxYearDetail(
+            TaxYear: taxYearOfEarnings,
+            EarningsOrNICs: earningsOrNICs,
+            IsNICs: isNICs,
+            IsPre88: isPre88,
+            Divisor: divisor,
+            AccrualRate: accrualRate,
+            S148FactorPct: earningsFactor,
+            RevaluedEarnings: revaluedEarnings,
+            RawGmpMale: gmpMale,
+            RawGmpFemale: gmpFemale);
     }
 }

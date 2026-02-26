@@ -28,23 +28,26 @@ public static class GmpCalculator
         // Tax year of leaving (for S148 factor lookup)
         int taxYearOfLeaving = TaxYearHelper.TaxYearFromDate(member.DateOfLeaving);
 
-        // Accumulate GMP per tax year
+        // Accumulate GMP per tax year, collecting audit details
         decimal pre88TotalM = 0m, pre88TotalF = 0m;
         decimal totalM = 0m, totalF = 0m;
+        var details = new List<TaxYearDetail>();
 
-        foreach (var (taxYear, earnings) in member.Earnings)
+        foreach (var (taxYear, earnings) in member.Earnings.OrderBy(e => e.Key))
         {
-            var (gmpM, gmpF) = TaxYearGmp.Calculate(
+            var detail = TaxYearGmp.Calculate(
                 earnings, taxYear, taxYearOfLeaving,
                 workingLifeM, workingLifeF, factors);
 
-            totalM += gmpM;
-            totalF += gmpF;
+            details.Add(detail);
+
+            totalM += detail.RawGmpMale;
+            totalF += detail.RawGmpFemale;
 
             if (TaxYearGmp.IsPre88(taxYear))
             {
-                pre88TotalM += gmpM;
-                pre88TotalF += gmpF;
+                pre88TotalM += detail.RawGmpMale;
+                pre88TotalF += detail.RawGmpFemale;
             }
         }
 
@@ -99,7 +102,8 @@ public static class GmpCalculator
             FemaleRevalued: femaleRevalued,
             RevaluationMethod: revMethod,
             RevaluationFactorMale: Math.Round(revFactorM, 3),
-            RevaluationFactorFemale: Math.Round(revFactorF, 3));
+            RevaluationFactorFemale: Math.Round(revFactorF, 3),
+            TaxYearDetails: details.AsReadOnly());
     }
 
     /// <summary>
