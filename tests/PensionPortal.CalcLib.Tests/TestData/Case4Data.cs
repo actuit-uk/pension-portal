@@ -160,6 +160,6 @@ public static class Case4Data
         public const decimal Pre88FemaleRevalued = 450.84m;   // flat once in PIP
 
         // Compensation
-        public const decimal CompensationTo2026 = 14323.6m;
+        public const decimal CompensationTo2026 = 14323.63m;
     }
 }

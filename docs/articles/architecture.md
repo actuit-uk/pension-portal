@@ -44,7 +44,19 @@ Key types:
 - **`GmpResult`** — calculation output with pre/post-88 GMP splits for both sexes, plus `TaxYearDetails` audit trail
 - **`TaxYearDetail`** — per-tax-year intermediate values (earnings, divisor, accrual rate, S148 factor, revalued earnings, raw GMP)
 - **`CashFlowEntry`** — year-by-year pension projection tracking GMP components, excess, and total pension for both sexes with GMP status transitions (Exit → Deferred → InPayment)
-- Internal helpers: `WorkingLife`, `TaxYearGmp`, `Revaluation`, `CashFlowBuilder` — mirror the principles from the legacy GMPEQ stored procedures but as clean, tested C#
+- **`CompensationEntry`** — per-year equalisation compensation comparing actual vs opposite-sex post-88 GMP cashflows, with discount rate and factor for present-value reporting
+- **`EqualisationResult`** — complete pipeline output: GMP result, cash flow projection, compensation entries, and total compensation
+- Internal helpers: `WorkingLife`, `TaxYearGmp`, `Revaluation`, `CashFlowBuilder`, `CompensationCalculator` — mirror the principles from the legacy GMPEQ stored procedures but as clean, tested C#
+
+### Full Calculation Pipeline
+
+`GmpCalculator.Calculate()` runs the complete equalisation pipeline in one call:
+
+1. **GMP Calculation** — per-tax-year GMP from earnings, revalued to GMP payable age
+2. **Cash Flow Projection** — year-by-year pension from leaving to projection end, with post-88 LPI3 increases
+3. **Compensation Calculation** — compares actual vs opposite-sex post-88 GMP from second PIP year onwards
+
+The compensation uses the "separate increase" method: pre-88 GMP stays flat, post-88 GMP increases at CPI capped at 3% (the statutory GMP Increase Order rate). Compensation accrues from the second PIP year for each sex (the first PIP year establishes the base before any increases apply).
 
 ### Excel Export (CalcLib.Export)
 

@@ -11,6 +11,32 @@ public static class GmpCalculator
     private const int FemaleGmpAge = 60;
 
     /// <summary>
+    /// Runs the full GMP equalisation pipeline: GMP calculation, cash flow projection,
+    /// and compensation calculation, returning a complete EqualisationResult.
+    /// </summary>
+    /// <param name="member">Member data including earnings history.</param>
+    /// <param name="revMethod">The GMP revaluation method to use.</param>
+    /// <param name="factors">Factor provider for all lookups.</param>
+    /// <param name="assumptions">Future projection assumptions.</param>
+    public static EqualisationResult Calculate(
+        MemberData member,
+        GmpRevaluationMethod revMethod,
+        IFactorProvider factors,
+        FutureAssumptions assumptions)
+    {
+        var gmp = CalculateGmp(member, revMethod, factors);
+        var cashFlow = CashFlowBuilder.Build(gmp, member, factors, assumptions);
+        var (compensation, total) = CompensationCalculator.Calculate(
+            cashFlow, member.Sex, factors, assumptions);
+
+        return new EqualisationResult(
+            Gmp: gmp,
+            CashFlow: cashFlow,
+            Compensation: compensation,
+            TotalCompensation: total);
+    }
+
+    /// <summary>
     /// Calculates GMP at date of leaving and revalued to GMP payable age.
     /// </summary>
     /// <param name="member">Member data including earnings history.</param>

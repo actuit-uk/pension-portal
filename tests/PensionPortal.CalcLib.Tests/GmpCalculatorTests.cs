@@ -79,4 +79,26 @@ public class GmpCalculatorTests
         Assert.Equal(Case4Data.Expected.Pre88RevaluedGmpMalePW, result.MaleRevalued.Pre88Weekly);
         Assert.Equal(Case4Data.Expected.Pre88RevaluedGmpFemalePW, result.FemaleRevalued.Pre88Weekly);
     }
+
+    [Fact]
+    public void Case4_FullPipeline_ReturnsEqualisationResult()
+    {
+        var result = GmpCalculator.Calculate(
+            Case4Data.Member, GmpRevaluationMethod.Section148,
+            Case4Data.CreateFactors(), Case4Data.Assumptions);
+
+        // GMP result is populated
+        Assert.Equal(Case4Data.Expected.TotalGmpMalePA, result.Gmp.MaleAtLeaving.TotalAnnual);
+
+        // Cash flow spans leaving to projection end
+        Assert.Equal(25, result.CashFlow.Count);
+        Assert.Equal(2002, result.CashFlow[0].TaxYear);
+        Assert.Equal(2026, result.CashFlow[^1].TaxYear);
+
+        // Compensation entries match cashflow count
+        Assert.Equal(25, result.Compensation.Count);
+
+        // Total compensation matches expected
+        Assert.Equal(Case4Data.Expected.CompensationTo2026, result.TotalCompensation);
+    }
 }
