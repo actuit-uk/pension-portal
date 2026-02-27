@@ -74,9 +74,21 @@ Excess pension (total scheme pension minus GMP) uses a three-tier fallback:
 2. **Salary-based estimate** — if `FinalPensionableSalary` is provided, total pension = salary × service ÷ accrual denominator
 3. **GMP-only** — when neither is available, excess = 0 (valid for GMP-only schemes)
 
+### EarningsEstimator
+
+`EarningsEstimator.Estimate()` synthesises a complete `MemberData` record from minimal inputs (DOB, sex, join/leave dates, ~1990 salary). Designed for small schemes with patchy records that lack per-year earnings histories.
+
+The estimator inflates/deflates the 1990 salary anchor using the ONS average weekly earnings index, then converts each tax year's estimated salary to the appropriate format:
+- Pre-1988: NI contributions (band earnings × `TaxYearGmp.NiDivisor`)
+- Post-1988: band earnings directly
+
+An optional `salaryMargin` parameter allows upper-bound sensitivity testing. `FinalPensionableSalary` is set from the inflated salary at leaving, enabling the tier-2 excess pension fallback.
+
+Reference data (LEL, UEL, earnings index) is hardcoded in `Internal/NiThresholds.cs` — fixed historical HMRC/ONS data that never varies between cases.
+
 ### Methodology Status
 
-The engine covers the full C2 methodology: GMP calculation with all three revaluation methods (Section 148, FixedRate, LimitedRate), excess pension, Barber window isolation, anti-franking, interest on arrears, separate and overall pension increase methods, and LPI3/LPI5 increase rates. PASA reference PDFs are in `wwwroot/docs/`.
+The engine covers the full C2 methodology: GMP calculation with all three revaluation methods (Section 148, FixedRate, LimitedRate), excess pension, Barber window isolation, anti-franking, interest on arrears, separate and overall pension increase methods, and LPI3/LPI5 increase rates. The EarningsEstimator enables minimal-data members to use the full pipeline. PASA reference PDFs are in `wwwroot/docs/`.
 
 ### Excel Export (CalcLib.Export)
 
