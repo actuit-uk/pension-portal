@@ -52,7 +52,7 @@ The `CashFlowEntry` record tracks Pre88/Post88/Excess/Total separately per sex, 
 - **Separate method**: Each component increases independently at its own rate. GMP components follow statutory rules; excess follows the scheme PIP rate.
 - **Overall method**: The `OverallExcess()` helper applies the scheme PIP rate to the running total pension, then tests the GMP floor (pre-88 flat + post-88 at LPI3 statutory). Excess is derived as `max(0, total pension - total GMP)`. A sentinel check (`runningTotal == 0`) detects the first PIP year since the `enteredPip` flag is already set by the GMP computation block.
 
-Key behaviours verified by tests (115 passing):
+Key behaviours verified by tests (126 passing):
 
 - GMP components (pre-88, post-88) are identical regardless of increase method
 - Under overall with a low scheme rate, excess erodes year-over-year
