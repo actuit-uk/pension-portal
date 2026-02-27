@@ -11,10 +11,12 @@ namespace PensionPortal.CalcLib;
 /// <param name="TotalCompensation">Sum of all compensation cash flows.</param>
 /// <param name="InterestOnArrears">Simple interest on past compensation arrears (base rate + 1%). Zero if no settlement date provided.</param>
 /// <param name="TotalWithInterest">TotalCompensation + InterestOnArrears.</param>
+/// <param name="Warnings">Advisory warnings about data limitations that may affect the calculation.</param>
 public record EqualisationResult(
     GmpResult Gmp,
     IReadOnlyList<CashFlowEntry> CashFlow,
     IReadOnlyList<CompensationEntry> Compensation,
     decimal TotalCompensation,
     decimal InterestOnArrears = 0m,
-    decimal TotalWithInterest = 0m);
+    decimal TotalWithInterest = 0m,
+    IReadOnlyList<string>? Warnings = null);

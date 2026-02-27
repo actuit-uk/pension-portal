@@ -50,13 +50,26 @@ public static class GmpCalculator
                 scheme.Assumptions.FutureDiscountRate);
         }
 
+        // Collect warnings
+        List<string>? warnings = null;
+        if (member.HasTransferredInGmp)
+        {
+            warnings ??= new List<string>();
+            warnings.Add(
+                "Member has transferred-in GMP. This calculation does not model " +
+                "separate revaluation, contracted-out periods, or comparator " +
+                "construction for transferred-in GMP. Results should be reviewed " +
+                "by a qualified actuary.");
+        }
+
         return new EqualisationResult(
             Gmp: gmp,
             CashFlow: cashFlow,
             Compensation: compensation,
             TotalCompensation: total,
             InterestOnArrears: interest,
-            TotalWithInterest: total + interest);
+            TotalWithInterest: total + interest,
+            Warnings: warnings?.AsReadOnly());
     }
 
     /// <summary>

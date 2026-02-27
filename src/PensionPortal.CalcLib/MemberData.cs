@@ -25,6 +25,12 @@ namespace PensionPortal.CalcLib;
 /// Tier 2 fallback for excess calculation when PensionAtLeaving is not available:
 /// estimated total pension = salary × pensionable service ÷ accrual denominator.
 /// </param>
+/// <param name="HasTransferredInGmp">
+/// Set to true if the member has GMP transferred in from another scheme.
+/// Transferred-in GMP requires separate revaluation, contracted-out periods, and
+/// comparator construction that CalcLib does not currently model. When true, a
+/// warning is included on the EqualisationResult.
+/// </param>
 public record MemberData(
     Sex Sex,
     DateTime DateOfBirth,
@@ -35,4 +41,5 @@ public record MemberData(
     DateTime? DateOfDeath,
     IReadOnlyDictionary<int, decimal> Earnings,
     decimal? PensionAtLeaving = null,
-    decimal? FinalPensionableSalary = null);
+    decimal? FinalPensionableSalary = null,
+    bool HasTransferredInGmp = false);
