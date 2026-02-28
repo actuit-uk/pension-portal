@@ -9,6 +9,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
 builder.Services.AddSingleton<DatabaseService>();
 builder.Services.AddSingleton<PensionDataService>();
+builder.Services.AddSingleton<ActuarialDataService>();
 builder.Services.AddSession();
 
 // Authentication

@@ -175,6 +175,28 @@ public class PensionDataService
         return ExecuteQuery(sql);
     }
 
+    /// <summary>Returns financial records for a membership, ordered by effective date.</summary>
+    public DataTable GetFinancialRecords(int membershipId, string? financialType = null)
+    {
+        var sql = """
+            SELECT financial_id, membership_id, financial_type, effective_date,
+                   total_earnings, pensionable_salary
+            FROM dbo.financial
+            WHERE membership_id = @MembershipId
+            """;
+
+        var parameters = new List<SqlParameter> { new("@MembershipId", membershipId) };
+
+        if (financialType != null)
+        {
+            sql += " AND financial_type = @FinancialType";
+            parameters.Add(new SqlParameter("@FinancialType", financialType));
+        }
+
+        sql += " ORDER BY effective_date";
+        return ExecuteQuery(sql, parameters.ToArray());
+    }
+
     private DataTable ExecuteQuery(string sql, params SqlParameter[] parameters)
     {
         using var conn = new SqlConnection(_connectionString);

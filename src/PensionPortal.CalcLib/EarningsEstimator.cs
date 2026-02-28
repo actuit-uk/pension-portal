@@ -117,6 +117,46 @@ public static class EarningsEstimator
             FinalPensionableSalary: fps);
     }
 
+    /// <summary>
+    /// Converts total earnings per tax year into the format expected by MemberData.Earnings.
+    /// For pre-1988: total earnings → band earnings (LEL to UEL) → NI contributions (× NI divisor).
+    /// For post-1988: total earnings → band earnings (LEL to UEL) used directly.
+    /// </summary>
+    /// <param name="totalEarningsByTaxYear">
+    /// Total gross earnings keyed by tax year (e.g. 1990 = 1990/91).
+    /// </param>
+    /// <returns>Earnings dictionary suitable for MemberData.Earnings.</returns>
+    public static IReadOnlyDictionary<int, decimal> ConvertTotalEarnings(
+        IReadOnlyDictionary<int, decimal> totalEarningsByTaxYear)
+    {
+        var result = new Dictionary<int, decimal>();
+
+        foreach (var (taxYear, totalEarnings) in totalEarningsByTaxYear)
+        {
+            if (!NiThresholds.LEL.TryGetValue(taxYear, out decimal lel))
+                continue;
+            if (!NiThresholds.UEL.TryGetValue(taxYear, out decimal uel))
+                continue;
+
+            decimal bandEarnings = Math.Max(0m, Math.Min(totalEarnings, uel) - lel);
+
+            if (taxYear <= TaxYearGmp.LastNIContributionYear)
+            {
+                decimal nics = Math.Round(bandEarnings * TaxYearGmp.NiDivisor, 2);
+                if (nics > 0m)
+                    result[taxYear] = nics;
+            }
+            else
+            {
+                decimal rounded = Math.Round(bandEarnings, 0);
+                if (rounded > 0m)
+                    result[taxYear] = rounded;
+            }
+        }
+
+        return result;
+    }
+
     private static decimal DecimalPow(decimal baseVal, int exponent)
     {
         if (exponent <= 0) return 1m;

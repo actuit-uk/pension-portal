@@ -10,8 +10,13 @@ namespace PensionPortal.Web.Controllers;
 public class GmpEqualisationController : Controller
 {
     private readonly PensionDataService _data;
+    private readonly ActuarialDataService _actuarial;
 
-    public GmpEqualisationController(PensionDataService data) => _data = data;
+    public GmpEqualisationController(PensionDataService data, ActuarialDataService actuarial)
+    {
+        _data = data;
+        _actuarial = actuarial;
+    }
 
     public IActionResult Index()
     {
@@ -101,14 +106,56 @@ public class GmpEqualisationController : Controller
             }
         }
 
-        // Synthesise earnings via EarningsEstimator
-        var factors = new DictionaryFactorProvider();
-        var memberData = EarningsEstimator.Estimate(
-            sex, dob, dateJoined, dateLeft,
-            salary1990: 15000m, factors) with { HasTransferredInGmp = hasTransfer };
+        // Load actuarial factors
+        var factors = _actuarial.LoadFactors();
+        var financials = _data.GetFinancialRecords(id, "CO_EARNINGS");
 
-        // Override CO dates from GMP records (more accurate than estimator defaults)
-        memberData = memberData with { DateCOStart = coStart, DateCOEnd = coEnd };
+        MemberData memberData;
+        if (financials.Rows.Count > 0)
+        {
+            // Build earnings from total_earnings via CalcLib conversion
+            var totalEarnings = new Dictionary<int, decimal>();
+            decimal? finalPensionableSalary = null;
+
+            foreach (System.Data.DataRow f in financials.Rows)
+            {
+                var effectiveDate = Convert.ToDateTime(f["effective_date"]);
+                int taxYear = TaxYearHelper.TaxYearFromDate(effectiveDate);
+
+                if (f["total_earnings"] != DBNull.Value)
+                    totalEarnings[taxYear] = Convert.ToDecimal(f["total_earnings"]);
+
+                // Track the last pensionable salary as FinalPensionableSalary
+                if (f["pensionable_salary"] != DBNull.Value)
+                    finalPensionableSalary = Convert.ToDecimal(f["pensionable_salary"]);
+            }
+
+            var earnings = EarningsEstimator.ConvertTotalEarnings(totalEarnings);
+
+            memberData = new MemberData(
+                Sex: sex,
+                DateOfBirth: dob,
+                DateCOStart: coStart,
+                DateCOEnd: coEnd,
+                DateOfLeaving: dateLeft,
+                DateOfRetirement: null,
+                DateOfDeath: null,
+                Earnings: earnings,
+                FinalPensionableSalary: finalPensionableSalary,
+                HasTransferredInGmp: hasTransfer);
+        }
+        else
+        {
+            // No financial records — synthesise from salary anchor
+            memberData = EarningsEstimator.Estimate(
+                sex, dob, dateJoined, dateLeft,
+                salary1990: 15000m, factors) with
+            {
+                HasTransferredInGmp = hasTransfer,
+                DateCOStart = coStart,
+                DateCOEnd = coEnd
+            };
+        }
 
         // Build SchemeConfig from section rules
         int maleNra = m["male_nra"] == DBNull.Value ? 65 : Convert.ToInt32(m["male_nra"]);

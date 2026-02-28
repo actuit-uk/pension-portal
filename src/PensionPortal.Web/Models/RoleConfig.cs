@@ -27,6 +27,10 @@ public record RoleConfig(
             "Advisory access to SCH001 and SCH002.",
             SchemeIds: new[] { "SCH001", "SCH002" }),
 
+        new RoleConfig("sch004admin", "SCH004 Admin",
+            "Simple Test Scheme — GMP equalisation test cases.",
+            SchemeIds: new[] { "SCH004" }),
+
         new RoleConfig("member", "Member (John Smith)",
             "Can only see own membership records.",
             PersonId: 1),
