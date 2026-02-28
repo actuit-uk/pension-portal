@@ -41,6 +41,9 @@ Thumbs.db
 ## Secrets - never commit
 appsettings.Production.json
 
+## Claude Code
+.claude/
+
 ## DocFX output (regenerate with: cd docs && docfx)
 docs/_site/
 docs/api/
