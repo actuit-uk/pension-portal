@@ -1,0 +1,101 @@
+@model System.Data.DataTable
+@{
+    var role = (PensionPortal.Web.Models.RoleConfig)ViewBag.Role;
+    var scheme = (System.Data.DataRow)ViewBag.Scheme;
+    var sections = (System.Data.DataTable)ViewBag.Sections;
+    ViewData["Title"] = scheme["scheme_name"].ToString();
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h1>@scheme["scheme_name"]</h1>
+        <p class="text-muted mb-0">
+            @scheme["scheme_id"] &middot; @scheme["scheme_type"]
+            @if (role != null)
+            {
+                <span>&middot; Viewing as: <strong>@role.DisplayName</strong></span>
+            }
+        </p>
+    </div>
+    <a asp-action="Index" class="btn btn-outline-secondary">Back to Schemes</a>
+</div>
+
+@if (sections.Rows.Count > 0)
+{
+    <h4 class="mt-4">Sections</h4>
+    <table class="table table-sm">
+        <thead class="table-light">
+            <tr>
+                <th>ID</th>
+                <th>Section Name</th>
+                <th>Type</th>
+                <th>Male NRA</th>
+                <th>Female NRA</th>
+                <th>Accrual</th>
+                <th>Increase</th>
+                <th>PIP</th>
+                <th>Anti-Franking</th>
+                <th>Revaluation</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (System.Data.DataRow sec in sections.Rows)
+            {
+                <tr>
+                    <td>@sec["section_id"]</td>
+                    <td>@sec["section_name"]</td>
+                    <td>@(sec["section_type"] == DBNull.Value ? "-" : sec["section_type"])</td>
+                    <td>@(sec["male_nra"] == DBNull.Value ? "-" : sec["male_nra"])</td>
+                    <td>@(sec["female_nra"] == DBNull.Value ? "-" : sec["female_nra"])</td>
+                    <td>@(sec["accrual_denominator"] == DBNull.Value ? "-" : $"1/{sec["accrual_denominator"]}ths")</td>
+                    <td>@(sec["increase_method"] == DBNull.Value ? "-" : sec["increase_method"])</td>
+                    <td>@(sec["pip_method"] == DBNull.Value ? "-" : sec["pip_method"])</td>
+                    <td>@(sec["anti_franking_applies"] == DBNull.Value ? "-" : (Convert.ToBoolean(sec["anti_franking_applies"]) ? "Yes" : "No"))</td>
+                    <td>@(sec["default_revaluation"] == DBNull.Value ? "-" : sec["default_revaluation"])</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<h4 class="mt-4">Members</h4>
+@if (Model.Rows.Count == 0)
+{
+    <div class="alert alert-info">No members to display.</div>
+}
+else
+{
+    <table class="table table-hover">
+        <thead class="table-dark">
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Gender</th>
+                <th>Date of Birth</th>
+                <th>Joined</th>
+                <th>Left</th>
+                <th>Section</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (System.Data.DataRow row in Model.Rows)
+            {
+                <tr>
+                    <td>@row["membership_id"]</td>
+                    <td>@row["forename"] @row["surname"]</td>
+                    <td>@row["gender"]</td>
+                    <td>@(row["date_of_birth"] == DBNull.Value ? "-" : Convert.ToDateTime(row["date_of_birth"]).ToString("dd MMM yyyy"))</td>
+                    <td>@(row["date_of_joining"] == DBNull.Value ? "-" : Convert.ToDateTime(row["date_of_joining"]).ToString("dd MMM yyyy"))</td>
+                    <td>@(row["date_of_leaving"] == DBNull.Value ? "-" : Convert.ToDateTime(row["date_of_leaving"]).ToString("dd MMM yyyy"))</td>
+                    <td>@(row["section_name"] == DBNull.Value ? "-" : row["section_name"])</td>
+                    <td class="text-end">
+                        <a asp-controller="Member" asp-action="Detail" asp-route-id="@row["membership_id"]"
+                           class="btn btn-sm btn-outline-primary">View</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    <p class="text-muted">@Model.Rows.Count member(s)</p>
+}

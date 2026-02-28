@@ -1,0 +1,112 @@
+@{
+    var role = (PensionPortal.Web.Models.RoleConfig)ViewBag.Role;
+    var m = (System.Data.DataRow)ViewBag.Member;
+    var gmpRecords = (System.Data.DataTable)ViewBag.GmpRecords;
+    ViewData["Title"] = $"{m["forename"]} {m["surname"]}";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h1>@m["forename"] @m["surname"]</h1>
+        <p class="text-muted mb-0">
+            Membership @m["membership_id"] &middot; @m["scheme_name"]
+        </p>
+    </div>
+    <a asp-controller="Scheme" asp-action="Detail" asp-route-id="@m["scheme_id"]"
+       class="btn btn-outline-secondary">Back to Scheme</a>
+</div>
+
+<div class="row g-3">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header"><strong>Person</strong></div>
+            <div class="card-body">
+                <table class="table table-sm mb-0">
+                    <tr><th style="width:40%">Name</th><td>@m["forename"] @m["surname"]</td></tr>
+                    <tr><th>Gender</th><td>@m["gender"]</td></tr>
+                    <tr><th>Date of Birth</th><td>@(m["date_of_birth"] == DBNull.Value ? "-" : Convert.ToDateTime(m["date_of_birth"]).ToString("dd MMM yyyy"))</td></tr>
+                    <tr><th>NINO</th><td>@(m["nino"] == DBNull.Value ? "-" : m["nino"])</td></tr>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header"><strong>Membership</strong></div>
+            <div class="card-body">
+                <table class="table table-sm mb-0">
+                    <tr><th style="width:40%">Scheme</th><td>@m["scheme_name"] (@m["scheme_id"])</td></tr>
+                    <tr><th>Section</th><td>@(m["section_name"] == DBNull.Value ? "-" : m["section_name"])</td></tr>
+                    <tr><th>Type</th><td>@(m["member_type"] == DBNull.Value ? "-" : m["member_type"])</td></tr>
+                    <tr><th>Joined</th><td>@(m["date_of_joining"] == DBNull.Value ? "-" : Convert.ToDateTime(m["date_of_joining"]).ToString("dd MMM yyyy"))</td></tr>
+                    <tr><th>Left</th><td>@(m["date_of_leaving"] == DBNull.Value ? "-" : Convert.ToDateTime(m["date_of_leaving"]).ToString("dd MMM yyyy"))</td></tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mt-1">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header"><strong>Section Rules</strong></div>
+            <div class="card-body">
+                <table class="table table-sm mb-0">
+                    <tr><th style="width:40%">Male NRA</th><td>@(m["male_nra"] == DBNull.Value ? "-" : m["male_nra"])</td></tr>
+                    <tr><th>Female NRA</th><td>@(m["female_nra"] == DBNull.Value ? "-" : m["female_nra"])</td></tr>
+                    <tr><th>Accrual</th><td>@(m["accrual_denominator"] == DBNull.Value ? "-" : $"1/{m["accrual_denominator"]}ths")</td></tr>
+                    <tr><th>Increase Method</th><td>@(m["increase_method"] == DBNull.Value ? "-" : m["increase_method"])</td></tr>
+                    <tr><th>PIP Method</th><td>@(m["pip_method"] == DBNull.Value ? "-" : m["pip_method"])</td></tr>
+                    <tr><th>Anti-Franking</th><td>@(m["anti_franking_applies"] == DBNull.Value ? "-" : (Convert.ToBoolean(m["anti_franking_applies"]) ? "Yes" : "No"))</td></tr>
+                    <tr><th>Revaluation</th><td>@(m["default_revaluation"] == DBNull.Value ? "-" : m["default_revaluation"])</td></tr>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    @if (gmpRecords.Rows.Count > 0)
+    {
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header"><strong>GMP Records</strong></div>
+                <div class="card-body">
+                    <table class="table table-sm mb-0">
+                        <thead>
+                            <tr>
+                                <th>Source</th>
+                                <th>CO Start</th>
+                                <th>CO End</th>
+                                <th>Revaluation</th>
+                                <th>GMP (M)</th>
+                                <th>GMP (F)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (System.Data.DataRow g in gmpRecords.Rows)
+                            {
+                                <tr>
+                                    <td>@(g["gmp_source"] == DBNull.Value ? "-" : g["gmp_source"])</td>
+                                    <td>@(g["accrual_start_date"] == DBNull.Value ? "-" : Convert.ToDateTime(g["accrual_start_date"]).ToString("dd MMM yyyy"))</td>
+                                    <td>@(g["accrual_end_date"] == DBNull.Value ? "-" : Convert.ToDateTime(g["accrual_end_date"]).ToString("dd MMM yyyy"))</td>
+                                    <td>@(g["revaluation_basis"] == DBNull.Value ? "-" : g["revaluation_basis"])</td>
+                                    <td>@(g["gmp_amount_male"] == DBNull.Value ? "-" : Convert.ToDecimal(g["gmp_amount_male"]).ToString("N2"))</td>
+                                    <td>@(g["gmp_amount_female"] == DBNull.Value ? "-" : Convert.ToDecimal(g["gmp_amount_female"]).ToString("N2"))</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header"><strong>GMP Records</strong></div>
+                <div class="card-body text-muted">No GMP records found.</div>
+            </div>
+        </div>
+    }
+</div>

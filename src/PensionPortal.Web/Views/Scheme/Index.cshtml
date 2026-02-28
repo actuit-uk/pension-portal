@@ -1,0 +1,48 @@
+@model System.Data.DataTable
+@{
+    var role = (PensionPortal.Web.Models.RoleConfig)ViewBag.Role;
+    ViewData["Title"] = "Schemes";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h1>Schemes</h1>
+        <p class="text-muted mb-0">Viewing as: <strong>@role.DisplayName</strong></p>
+    </div>
+    <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary">Switch Role</a>
+</div>
+
+@if (Model.Rows.Count == 0)
+{
+    <div class="alert alert-info">No schemes available for this role.</div>
+}
+else
+{
+    <table class="table table-hover">
+        <thead class="table-dark">
+            <tr>
+                <th>Scheme ID</th>
+                <th>Scheme Name</th>
+                <th>Type</th>
+                <th class="text-end">Members</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (System.Data.DataRow row in Model.Rows)
+            {
+                <tr>
+                    <td>@row["scheme_id"]</td>
+                    <td>@row["scheme_name"]</td>
+                    <td>@row["scheme_type"]</td>
+                    <td class="text-end">@row["member_count"]</td>
+                    <td class="text-end">
+                        <a asp-action="Detail" asp-route-id="@row["scheme_id"]"
+                           class="btn btn-sm btn-outline-primary">View</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    <p class="text-muted">@Model.Rows.Count scheme(s)</p>
+}

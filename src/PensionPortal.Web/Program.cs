@@ -6,6 +6,8 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 builder.Services.AddSingleton<DatabaseService>();
+builder.Services.AddSingleton<PensionDataService>();
+builder.Services.AddSession();
 
 // Authentication
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
@@ -23,6 +25,7 @@ app.UseStatusCodePagesWithReExecute("/Home/StatusCode", "?code={0}");
 app.UseStaticFiles();
 
 app.UseRouting();
+app.UseSession();
 
 app.UseAuthentication();
 app.UseAuthorization();
