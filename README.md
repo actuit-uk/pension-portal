@@ -17,6 +17,7 @@ This is a smoke test for migrating the GMPEQ Classic ASP + T-SQL stored procedur
 - CSV export for results download
 - Markdown knowledge base replaces database-driven document catalogue
 - DocFX replaces Sandcastle for API documentation
+- GMP Equalisation UI: CalcLib integrated into web views with year-by-year cash flow and compensation grids
 
 ## Solution Structure
 
@@ -24,11 +25,13 @@ This is a smoke test for migrating the GMPEQ Classic ASP + T-SQL stored procedur
 pension-portal/
 ├── PensionPortal.sln
 ├── src/
-│   ├── PensionPortal.Web/          ← ASP.NET Core MVC app
-│   └── PensionPortal.CalcLib/      ← Calculation library
-├── sql/                            ← Database scripts
-├── docs/                           ← DocFX documentation
-└── data/                           ← Sample CSV files
+│   ├── PensionPortal.Web/              ← ASP.NET Core MVC app
+│   ├── PensionPortal.CalcLib/          ← Calculation library
+│   ├── PensionPortal.CalcLib.Export/   ← Excel export (ClosedXML)
+│   └── PensionPortal.CalcLib.Tests/    ← CalcLib unit tests
+├── sql/                                ← Database scripts
+├── docs/                               ← DocFX documentation
+└── data/                               ← Sample CSV files
 ```
 
 ## Prerequisites

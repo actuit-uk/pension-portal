@@ -4,6 +4,17 @@
     var memberData = (PensionPortal.CalcLib.MemberData)ViewBag.MemberData;
     var schemeConfig = (PensionPortal.CalcLib.SchemeConfig)ViewBag.SchemeConfig;
     ViewData["Title"] = $"GMP Equalisation — {m["forename"]} {m["surname"]}";
+
+    var dob = memberData.DateOfBirth;
+    int AgeAtTaxYear(int ty) => ty - dob.Year - (dob.Month > 4 || (dob.Month == 4 && dob.Day > 5) ? 1 : 0);
+
+    string StatusLabel(PensionPortal.CalcLib.GmpStatus s) => s switch
+    {
+        PensionPortal.CalcLib.GmpStatus.Exit => "EXIT",
+        PensionPortal.CalcLib.GmpStatus.Deferred => "DEF",
+        PensionPortal.CalcLib.GmpStatus.InPayment => "PIP",
+        _ => "-"
+    };
 }
 
 <div class="d-flex justify-content-between align-items-center mb-3">
@@ -31,14 +42,14 @@
     </div>
 }
 
+<!-- Summary cards -->
 <div class="row g-3">
-    <!-- Summary -->
-    <div class="col-md-6">
+    <div class="col-md-4">
         <div class="card">
             <div class="card-header"><strong>Compensation Summary</strong></div>
             <div class="card-body">
                 <table class="table table-sm mb-0">
-                    <tr><th style="width:50%">Total Compensation</th><td class="text-end">@Model.TotalCompensation.ToString("N2")</td></tr>
+                    <tr><th style="width:55%">Total Compensation</th><td class="text-end">@Model.TotalCompensation.ToString("N2")</td></tr>
                     <tr><th>Interest on Arrears</th><td class="text-end">@Model.InterestOnArrears.ToString("N2")</td></tr>
                     <tr class="table-primary"><th>Total with Interest</th><td class="text-end"><strong>@Model.TotalWithInterest.ToString("N2")</strong></td></tr>
                 </table>
@@ -46,20 +57,35 @@
         </div>
     </div>
 
-    <!-- Inputs -->
-    <div class="col-md-6">
+    <div class="col-md-4">
         <div class="card">
             <div class="card-header"><strong>Calculation Inputs</strong></div>
             <div class="card-body">
                 <table class="table table-sm mb-0">
-                    <tr><th style="width:50%">Sex</th><td>@memberData.Sex</td></tr>
+                    <tr><th style="width:55%">Sex</th><td>@memberData.Sex</td></tr>
                     <tr><th>Date of Birth</th><td>@memberData.DateOfBirth.ToString("dd MMM yyyy")</td></tr>
                     <tr><th>CO Start</th><td>@memberData.DateCOStart.ToString("dd MMM yyyy")</td></tr>
                     <tr><th>CO End</th><td>@memberData.DateCOEnd.ToString("dd MMM yyyy")</td></tr>
                     <tr><th>Date of Leaving</th><td>@memberData.DateOfLeaving.ToString("dd MMM yyyy")</td></tr>
-                    <tr><th>Revaluation Method</th><td>@schemeConfig.GmpRevMethod</td></tr>
+                    <tr><th>Revaluation</th><td>@schemeConfig.GmpRevMethod</td></tr>
                     <tr><th>Increase Method</th><td>@schemeConfig.IncreaseMethod</td></tr>
                     <tr><th>Accrual Rate</th><td>1/@(schemeConfig.AccrualRateDenominator)ths</td></tr>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header"><strong>Key Figures</strong></div>
+            <div class="card-body">
+                <table class="table table-sm mb-0">
+                    <tr><th style="width:55%">Working Life (M)</th><td>@Model.Gmp.WorkingLifeMale years</td></tr>
+                    <tr><th>Working Life (F)</th><td>@Model.Gmp.WorkingLifeFemale years</td></tr>
+                    <tr><th>Tax Year of Leaving</th><td>@Model.Gmp.TaxYearOfLeaving</td></tr>
+                    <tr><th>Barber Window</th><td>@Model.Gmp.BarberWindowProportion.ToString("N4")</td></tr>
+                    <tr><th>Reval Factor (M)</th><td>@Model.Gmp.RevaluationFactorMale.ToString("N6")</td></tr>
+                    <tr><th>Reval Factor (F)</th><td>@Model.Gmp.RevaluationFactorFemale.ToString("N6")</td></tr>
                 </table>
             </div>
         </div>
@@ -77,27 +103,14 @@
                         <tr><th></th><th class="text-end">Male (pa)</th><th class="text-end">Female (pa)</th></tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            <th>Pre-88 GMP</th>
-                            <td class="text-end">@Model.Gmp.MaleAtLeaving.Pre88Annual.ToString("N2")</td>
-                            <td class="text-end">@Model.Gmp.FemaleAtLeaving.Pre88Annual.ToString("N2")</td>
-                        </tr>
-                        <tr>
-                            <th>Post-88 GMP</th>
-                            <td class="text-end">@Model.Gmp.MaleAtLeaving.Post88Annual.ToString("N2")</td>
-                            <td class="text-end">@Model.Gmp.FemaleAtLeaving.Post88Annual.ToString("N2")</td>
-                        </tr>
-                        <tr class="table-light">
-                            <th>Total GMP</th>
-                            <td class="text-end"><strong>@Model.Gmp.MaleAtLeaving.TotalAnnual.ToString("N2")</strong></td>
-                            <td class="text-end"><strong>@Model.Gmp.FemaleAtLeaving.TotalAnnual.ToString("N2")</strong></td>
-                        </tr>
+                        <tr><th>Pre-88</th><td class="text-end">@Model.Gmp.MaleAtLeaving.Pre88Annual.ToString("N2")</td><td class="text-end">@Model.Gmp.FemaleAtLeaving.Pre88Annual.ToString("N2")</td></tr>
+                        <tr><th>Post-88</th><td class="text-end">@Model.Gmp.MaleAtLeaving.Post88Annual.ToString("N2")</td><td class="text-end">@Model.Gmp.FemaleAtLeaving.Post88Annual.ToString("N2")</td></tr>
+                        <tr class="table-light"><th>Total</th><td class="text-end"><strong>@Model.Gmp.MaleAtLeaving.TotalAnnual.ToString("N2")</strong></td><td class="text-end"><strong>@Model.Gmp.FemaleAtLeaving.TotalAnnual.ToString("N2")</strong></td></tr>
                     </tbody>
                 </table>
             </div>
         </div>
     </div>
-
     <div class="col-md-6">
         <div class="card">
             <div class="card-header"><strong>GMP Revalued to Payable Age</strong></div>
@@ -107,26 +120,9 @@
                         <tr><th></th><th class="text-end">Male (pa)</th><th class="text-end">Female (pa)</th></tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            <th>Pre-88 GMP</th>
-                            <td class="text-end">@Model.Gmp.MaleRevalued.Pre88Annual.ToString("N2")</td>
-                            <td class="text-end">@Model.Gmp.FemaleRevalued.Pre88Annual.ToString("N2")</td>
-                        </tr>
-                        <tr>
-                            <th>Post-88 GMP</th>
-                            <td class="text-end">@Model.Gmp.MaleRevalued.Post88Annual.ToString("N2")</td>
-                            <td class="text-end">@Model.Gmp.FemaleRevalued.Post88Annual.ToString("N2")</td>
-                        </tr>
-                        <tr class="table-light">
-                            <th>Total GMP</th>
-                            <td class="text-end"><strong>@Model.Gmp.MaleRevalued.TotalAnnual.ToString("N2")</strong></td>
-                            <td class="text-end"><strong>@Model.Gmp.FemaleRevalued.TotalAnnual.ToString("N2")</strong></td>
-                        </tr>
-                        <tr>
-                            <th>Revaluation Factor</th>
-                            <td class="text-end">@Model.Gmp.RevaluationFactorMale.ToString("N6")</td>
-                            <td class="text-end">@Model.Gmp.RevaluationFactorFemale.ToString("N6")</td>
-                        </tr>
+                        <tr><th>Pre-88</th><td class="text-end">@Model.Gmp.MaleRevalued.Pre88Annual.ToString("N2")</td><td class="text-end">@Model.Gmp.FemaleRevalued.Pre88Annual.ToString("N2")</td></tr>
+                        <tr><th>Post-88</th><td class="text-end">@Model.Gmp.MaleRevalued.Post88Annual.ToString("N2")</td><td class="text-end">@Model.Gmp.FemaleRevalued.Post88Annual.ToString("N2")</td></tr>
+                        <tr class="table-light"><th>Total</th><td class="text-end"><strong>@Model.Gmp.MaleRevalued.TotalAnnual.ToString("N2")</strong></td><td class="text-end"><strong>@Model.Gmp.FemaleRevalued.TotalAnnual.ToString("N2")</strong></td></tr>
                     </tbody>
                 </table>
             </div>
@@ -134,20 +130,116 @@
     </div>
 </div>
 
-<!-- Working Life & Key Figures -->
-<div class="row g-3 mt-1">
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header"><strong>Key Figures</strong></div>
-            <div class="card-body">
-                <table class="table table-sm mb-0">
-                    <tr><th style="width:50%">Working Life (Male)</th><td>@Model.Gmp.WorkingLifeMale years</td></tr>
-                    <tr><th>Working Life (Female)</th><td>@Model.Gmp.WorkingLifeFemale years</td></tr>
-                    <tr><th>Tax Year of Leaving</th><td>@Model.Gmp.TaxYearOfLeaving</td></tr>
-                    <tr><th>Barber Window Proportion</th><td>@Model.Gmp.BarberWindowProportion.ToString("N6")</td></tr>
-                    <tr><th>Barber Service Proportion</th><td>@Model.Gmp.BarberServiceProportion.ToString("N6")</td></tr>
-                </table>
-            </div>
+<!-- Tabbed detail grids -->
+<ul class="nav nav-tabs mt-4" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="cashflow-tab" data-bs-toggle="tab" data-bs-target="#cashflow-pane"
+                type="button" role="tab">Cash Flow</button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link" id="compensation-tab" data-bs-toggle="tab" data-bs-target="#compensation-pane"
+                type="button" role="tab">Compensation</button>
+    </li>
+</ul>
+
+<div class="tab-content">
+    <!-- Cash Flow tab -->
+    <div class="tab-pane fade show active" id="cashflow-pane" role="tabpanel">
+        <div class="table-responsive">
+            <table class="table table-sm table-hover mt-0 mb-0" style="font-size: 0.85rem;">
+                <thead class="table-dark">
+                    <tr>
+                        <th rowspan="2" class="align-bottom">Year</th>
+                        <th rowspan="2" class="align-bottom text-center">Age</th>
+                        <th colspan="5" class="text-center border-start">Male</th>
+                        <th colspan="5" class="text-center border-start">Female</th>
+                        <th colspan="2" class="text-center border-start">Increase Factors</th>
+                    </tr>
+                    <tr>
+                        <th class="text-center border-start">Status</th>
+                        <th class="text-end">Pre-88</th>
+                        <th class="text-end">Post-88</th>
+                        <th class="text-end">Excess</th>
+                        <th class="text-end">Total</th>
+                        <th class="text-center border-start">Status</th>
+                        <th class="text-end">Pre-88</th>
+                        <th class="text-end">Post-88</th>
+                        <th class="text-end">Excess</th>
+                        <th class="text-end">Total</th>
+                        <th class="text-end border-start">Post-88</th>
+                        <th class="text-end">Excess</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @{ var prevStatusM = PensionPortal.CalcLib.GmpStatus.Exit; }
+                    @foreach (var cf in Model.CashFlow)
+                    {
+                        var age = AgeAtTaxYear(cf.TaxYear);
+                        var isTransition = cf.StatusMale == PensionPortal.CalcLib.GmpStatus.InPayment && prevStatusM != PensionPortal.CalcLib.GmpStatus.InPayment;
+                        prevStatusM = cf.StatusMale;
+                        <tr class="@(isTransition ? "table-info" : "")">
+                            <td>@cf.TaxYear</td>
+                            <td class="text-center">@age</td>
+                            <td class="text-center border-start">@StatusLabel(cf.StatusMale)</td>
+                            <td class="text-end">@cf.Pre88GmpMale.ToString("N2")</td>
+                            <td class="text-end">@cf.Post88GmpMale.ToString("N2")</td>
+                            <td class="text-end">@cf.ExcessMale.ToString("N2")</td>
+                            <td class="text-end"><strong>@cf.TotalPensionMale.ToString("N2")</strong></td>
+                            <td class="text-center border-start">@StatusLabel(cf.StatusFemale)</td>
+                            <td class="text-end">@cf.Pre88GmpFemale.ToString("N2")</td>
+                            <td class="text-end">@cf.Post88GmpFemale.ToString("N2")</td>
+                            <td class="text-end">@cf.ExcessFemale.ToString("N2")</td>
+                            <td class="text-end"><strong>@cf.TotalPensionFemale.ToString("N2")</strong></td>
+                            <td class="text-end border-start">@(cf.Post88GmpIncFactor == 0 ? "-" : cf.Post88GmpIncFactor.ToString("P2"))</td>
+                            <td class="text-end">@(cf.ExcessIncFactor == 0 ? "-" : cf.ExcessIncFactor.ToString("P2"))</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
         </div>
+        <p class="text-muted mt-2">@Model.CashFlow.Count year(s)</p>
+    </div>
+
+    <!-- Compensation tab -->
+    <div class="tab-pane fade" id="compensation-pane" role="tabpanel">
+        <div class="table-responsive">
+            <table class="table table-sm table-hover mt-0 mb-0" style="font-size: 0.85rem;">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Year</th>
+                        <th class="text-center">Age</th>
+                        <th class="text-end">Actual</th>
+                        <th class="text-end">Opp Sex</th>
+                        <th class="text-end">Compensation</th>
+                        <th class="text-end">Discount Rate</th>
+                        <th class="text-end">Discount Factor</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var ce in Model.Compensation)
+                    {
+                        var age = AgeAtTaxYear(ce.TaxYear);
+                        var hasComp = ce.CompensationCashFlow != 0;
+                        <tr class="@(hasComp ? "" : "text-muted")">
+                            <td>@ce.TaxYear</td>
+                            <td class="text-center">@age</td>
+                            <td class="text-end">@ce.ActualCashFlow.ToString("N2")</td>
+                            <td class="text-end">@ce.OppSexCashFlow.ToString("N2")</td>
+                            <td class="text-end @(hasComp ? "fw-bold" : "")">@ce.CompensationCashFlow.ToString("N2")</td>
+                            <td class="text-end">@ce.DiscountRate.ToString("P3")</td>
+                            <td class="text-end">@ce.DiscountFactor.ToString("N6")</td>
+                        </tr>
+                    }
+                </tbody>
+                <tfoot class="table-light">
+                    <tr>
+                        <th colspan="4">Total</th>
+                        <th class="text-end">@Model.TotalCompensation.ToString("N2")</th>
+                        <th colspan="2"></th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+        <p class="text-muted mt-2">@Model.Compensation.Count year(s)</p>
     </div>
 </div>

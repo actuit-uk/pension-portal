@@ -141,6 +141,32 @@ calc.run + calc.run_cashflow + calc.run_compensation
 dbo.gmp (update equalisation_status, equalisation_uplift)
 ```
 
+## Web UI Integration
+
+### GmpEqualisationController
+
+The `GmpEqualisationController` bridges pension-standard data to CalcLib, providing an interactive GMP equalisation workflow directly in the web UI.
+
+**Index** — lists members who have GMP records, filtered by the active role. Queries `PensionDataService.GetMembersWithGmp()` which joins `member`, `person`, `scheme`, and `gmp` tables to show key member info and contracted-out date ranges.
+
+**Run** — loads a member's detail, GMP records, and section rules, then bridges DB rows into CalcLib inputs:
+
+- `MemberData` — via `EarningsEstimator.Estimate()` with a ~£15k 1990 salary anchor, using CO dates from the GMP record and date of leaving from the membership
+- `SchemeConfig` — constructed from section rules (NRA, accrual denominator, increase method, PIP method, anti-franking, revaluation basis)
+- `IFactorProvider` — `DictionaryFactorProvider` with database-loaded factors (or empty for estimation)
+
+The result view presents `EqualisationResult` in three layers:
+
+1. **Summary cards** — compensation total, interest, key inputs, GMP breakdown (at leaving + revalued)
+2. **Cash Flow tab** — year-by-year grid with side-by-side male/female columns: GMP status, pre-88 GMP, post-88 GMP, excess, total pension, and increase factors
+3. **Compensation tab** — year-by-year actual vs opposite-sex cash flows, compensation difference, discount rate and factor, with a totals footer
+
+The tabbed layout keeps detailed grids navigable without clutter. PIP transition years are highlighted for quick identification.
+
+### Navigation
+
+The Calcs dropdown in the main nav provides an extensible entry point for calculation types. GMP Equalisation is the first item; future calculation types slot in as additional dropdown items. Members with GMP records also see a "Run Equalisation" button on their detail page.
+
 ## Deployment
 
 The application is published with `dotnet publish -c Release` and deployed to IONOS via FTP. The CalcLib DLL is bundled in the published output — it runs on the web server, not as a separate service.
