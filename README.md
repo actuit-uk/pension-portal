@@ -38,6 +38,7 @@ pension-portal/
 
 - .NET 8.0 SDK
 - SQL Server (local instance or IONOS)
+- ActuarialData database (S148, PIP, discount rate factors for GMP equalisation)
 
 ## Getting Started
 

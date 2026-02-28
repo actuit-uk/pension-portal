@@ -108,7 +108,7 @@ Member data uses the [pension-standard](https://github.com/actuit-uk/pension-sta
 | `member` | `MemberData.DateOfLeaving`, section FK for benefit rules |
 | `gmp` | `MemberData.DateCOStart/DateCOEnd`, `GmpRevaluationMethod` (from `revaluation_basis`), `MemberData.HasTransferredInGmp` (from `gmp_source = 'TRANSFER_IN'`) |
 | `section` | `SchemeConfig` — NRA, accrual rate, increase method, PIP method, anti-franking (pension-standard [#1](https://github.com/actuit-uk/pension-standard/issues/1)) |
-| `financial` | `MemberData.Earnings`, salary data for `EarningsEstimator` (pension-standard [#2](https://github.com/actuit-uk/pension-standard/issues/2)) |
+| `financial` | `MemberData.Earnings` (from `total_earnings` via `ConvertTotalEarnings`), `MemberData.FinalPensionableSalary` (from `pensionable_salary` at leaving). Falls back to `EarningsEstimator` when no financial records exist. (pension-standard [#2](https://github.com/actuit-uk/pension-standard/issues/2), [#3](https://github.com/actuit-uk/pension-standard/issues/3)) |
 | `benefit_slice` | `MemberData.PensionAtLeaving` (from `slice_type = 'SCHEME'`) |
 
 The `section` table links loosely to FinancialEntities' `ArrangementSection` via `source_system` / `source_record_id`.
@@ -119,7 +119,7 @@ Engine-specific tables for factor data and calculation outputs:
 
 | Table | Purpose |
 |-------|---------|
-| `calc.factor` | Actuarial reference data: S148 orders, LPI rates, discount rates, BoE base rates. Keyed by `(factor_type, tax_year)`. Will dovetail with ActuarialData library when finalised. |
+| `calc.factor` | Actuarial reference data (reserved for local factor storage). Currently factors are loaded directly from the ActuarialData database via `ActuarialDataService`. |
 | `calc.run` | Calculation audit trail: inputs snapshot, summary outputs, run metadata |
 | `calc.run_cashflow` | Year-by-year cash flow projection (maps to `CashFlowEntry`) |
 | `calc.run_compensation` | Year-by-year compensation (maps to `CompensationEntry`) |
@@ -131,8 +131,8 @@ All input data lives in pension-standard (`dbo`). The `calc` schema holds only f
 ```
 dbo.person + dbo.member + dbo.gmp     → MemberData
 dbo.section                            → SchemeConfig
-dbo.financial (earnings/salary)        → MemberData.Earnings (or via EarningsEstimator)
-calc.factor                            → IFactorProvider
+dbo.financial (total_earnings/salary)  → MemberData.Earnings + FinalPensionableSalary
+ActuarialData.rate_value               → IFactorProvider (S148, PIP, discount, fixed rates)
                     ↓
             GmpCalculator.Calculate()
                     ↓
@@ -151,9 +151,9 @@ The `GmpEqualisationController` bridges pension-standard data to CalcLib, provid
 
 **Run** — loads a member's detail, GMP records, and section rules, then bridges DB rows into CalcLib inputs:
 
-- `MemberData` — via `EarningsEstimator.Estimate()` with a ~£15k 1990 salary anchor, using CO dates from the GMP record and date of leaving from the membership
+- `MemberData` — if `CO_EARNINGS` financial records exist, `total_earnings` is converted to band earnings via `EarningsEstimator.ConvertTotalEarnings()` and `pensionable_salary` (at leaving) becomes `FinalPensionableSalary`. Falls back to `EarningsEstimator.Estimate()` with a salary anchor when no financial records are present.
 - `SchemeConfig` — constructed from section rules (NRA, accrual denominator, increase method, PIP method, anti-franking, revaluation basis)
-- `IFactorProvider` — `DictionaryFactorProvider` with database-loaded factors (or empty for estimation)
+- `IFactorProvider` — `ActuarialDataService.LoadFactors()` populates a `DictionaryFactorProvider` with real S148 earnings revaluation, fixed revaluation rates, PIP increase factors (LPI3/LPI5/PublicSector), and discount rates from the ActuarialData database
 
 The result view presents `EqualisationResult` in three layers:
 
