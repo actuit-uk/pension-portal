@@ -1,0 +1,54 @@
+@model System.Data.DataTable
+@{
+    ViewData["Title"] = "GMP Equalisation";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h1>GMP Equalisation</h1>
+        <p class="text-muted mb-0">Members with GMP records</p>
+    </div>
+</div>
+
+@if (Model.Rows.Count == 0)
+{
+    <div class="alert alert-info">No members with GMP records found for your current role.</div>
+}
+else
+{
+    <table class="table table-hover">
+        <thead class="table-dark">
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Gender</th>
+                <th>Date of Birth</th>
+                <th>Scheme</th>
+                <th>CO Start</th>
+                <th>CO End</th>
+                <th>Date Left</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (System.Data.DataRow row in Model.Rows)
+            {
+                <tr>
+                    <td>@row["membership_id"]</td>
+                    <td>@row["forename"] @row["surname"]</td>
+                    <td>@row["gender"]</td>
+                    <td>@(row["date_of_birth"] == DBNull.Value ? "-" : Convert.ToDateTime(row["date_of_birth"]).ToString("dd MMM yyyy"))</td>
+                    <td>@row["scheme_name"]</td>
+                    <td>@(row["accrual_start_date"] == DBNull.Value ? "-" : Convert.ToDateTime(row["accrual_start_date"]).ToString("dd MMM yyyy"))</td>
+                    <td>@(row["accrual_end_date"] == DBNull.Value ? "-" : Convert.ToDateTime(row["accrual_end_date"]).ToString("dd MMM yyyy"))</td>
+                    <td>@(row["date_of_leaving"] == DBNull.Value ? "-" : Convert.ToDateTime(row["date_of_leaving"]).ToString("dd MMM yyyy"))</td>
+                    <td class="text-end">
+                        <a asp-action="Run" asp-route-id="@row["membership_id"]"
+                           class="btn btn-sm btn-outline-primary">Run</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    <p class="text-muted">@Model.Rows.Count member(s)</p>
+}

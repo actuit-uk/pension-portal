@@ -12,8 +12,15 @@
             Membership @m["membership_id"] &middot; @m["scheme_name"]
         </p>
     </div>
-    <a asp-controller="Scheme" asp-action="Detail" asp-route-id="@m["scheme_id"]"
-       class="btn btn-outline-secondary">Back to Scheme</a>
+    <div>
+        @if (gmpRecords.Rows.Count > 0)
+        {
+            <a asp-controller="GmpEqualisation" asp-action="Run" asp-route-id="@m["membership_id"]"
+               class="btn btn-primary me-2">Run Equalisation</a>
+        }
+        <a asp-controller="Scheme" asp-action="Detail" asp-route-id="@m["scheme_id"]"
+           class="btn btn-outline-secondary">Back to Scheme</a>
+    </div>
 </div>
 
 <div class="row g-3">

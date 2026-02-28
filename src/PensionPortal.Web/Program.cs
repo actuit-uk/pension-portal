@@ -1,3 +1,5 @@
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using PensionPortal.Web.Services;
 
@@ -28,6 +30,26 @@ app.UseRouting();
 app.UseSession();
 
 app.UseAuthentication();
+
+// Dev-only: auto-sign-in so [Authorize] pages work without the login screen
+if (app.Environment.IsDevelopment())
+{
+    app.Use(async (context, next) =>
+    {
+        if (context.User.Identity?.IsAuthenticated != true)
+        {
+            var claims = new List<Claim> { new(ClaimTypes.Name, "admin") };
+            var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+            var principal = new ClaimsPrincipal(identity);
+            context.User = principal;
+            await context.SignInAsync(
+                CookieAuthenticationDefaults.AuthenticationScheme,
+                principal);
+        }
+        await next();
+    });
+}
+
 app.UseAuthorization();
 
 app.MapControllerRoute(

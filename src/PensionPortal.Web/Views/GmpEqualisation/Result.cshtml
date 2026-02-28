@@ -1,0 +1,153 @@
+@model PensionPortal.CalcLib.EqualisationResult
+@{
+    var m = (System.Data.DataRow)ViewBag.Member;
+    var memberData = (PensionPortal.CalcLib.MemberData)ViewBag.MemberData;
+    var schemeConfig = (PensionPortal.CalcLib.SchemeConfig)ViewBag.SchemeConfig;
+    ViewData["Title"] = $"GMP Equalisation — {m["forename"]} {m["surname"]}";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h1>GMP Equalisation Result</h1>
+        <p class="text-muted mb-0">@m["forename"] @m["surname"] &middot; Membership @m["membership_id"] &middot; @m["scheme_name"]</p>
+    </div>
+    <div>
+        <a asp-controller="Member" asp-action="Detail" asp-route-id="@m["membership_id"]"
+           class="btn btn-outline-secondary me-2">Member Detail</a>
+        <a asp-action="Index" class="btn btn-outline-secondary">Back to List</a>
+    </div>
+</div>
+
+@if (Model.Warnings?.Count > 0)
+{
+    <div class="alert alert-warning">
+        <strong>Warnings:</strong>
+        <ul class="mb-0 mt-1">
+            @foreach (var w in Model.Warnings)
+            {
+                <li>@w</li>
+            }
+        </ul>
+    </div>
+}
+
+<div class="row g-3">
+    <!-- Summary -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header"><strong>Compensation Summary</strong></div>
+            <div class="card-body">
+                <table class="table table-sm mb-0">
+                    <tr><th style="width:50%">Total Compensation</th><td class="text-end">@Model.TotalCompensation.ToString("N2")</td></tr>
+                    <tr><th>Interest on Arrears</th><td class="text-end">@Model.InterestOnArrears.ToString("N2")</td></tr>
+                    <tr class="table-primary"><th>Total with Interest</th><td class="text-end"><strong>@Model.TotalWithInterest.ToString("N2")</strong></td></tr>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Inputs -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header"><strong>Calculation Inputs</strong></div>
+            <div class="card-body">
+                <table class="table table-sm mb-0">
+                    <tr><th style="width:50%">Sex</th><td>@memberData.Sex</td></tr>
+                    <tr><th>Date of Birth</th><td>@memberData.DateOfBirth.ToString("dd MMM yyyy")</td></tr>
+                    <tr><th>CO Start</th><td>@memberData.DateCOStart.ToString("dd MMM yyyy")</td></tr>
+                    <tr><th>CO End</th><td>@memberData.DateCOEnd.ToString("dd MMM yyyy")</td></tr>
+                    <tr><th>Date of Leaving</th><td>@memberData.DateOfLeaving.ToString("dd MMM yyyy")</td></tr>
+                    <tr><th>Revaluation Method</th><td>@schemeConfig.GmpRevMethod</td></tr>
+                    <tr><th>Increase Method</th><td>@schemeConfig.IncreaseMethod</td></tr>
+                    <tr><th>Accrual Rate</th><td>1/@(schemeConfig.AccrualRateDenominator)ths</td></tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- GMP Breakdown -->
+<div class="row g-3 mt-1">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header"><strong>GMP at Date of Leaving</strong></div>
+            <div class="card-body">
+                <table class="table table-sm mb-0">
+                    <thead class="table-light">
+                        <tr><th></th><th class="text-end">Male (pa)</th><th class="text-end">Female (pa)</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <th>Pre-88 GMP</th>
+                            <td class="text-end">@Model.Gmp.MaleAtLeaving.Pre88Annual.ToString("N2")</td>
+                            <td class="text-end">@Model.Gmp.FemaleAtLeaving.Pre88Annual.ToString("N2")</td>
+                        </tr>
+                        <tr>
+                            <th>Post-88 GMP</th>
+                            <td class="text-end">@Model.Gmp.MaleAtLeaving.Post88Annual.ToString("N2")</td>
+                            <td class="text-end">@Model.Gmp.FemaleAtLeaving.Post88Annual.ToString("N2")</td>
+                        </tr>
+                        <tr class="table-light">
+                            <th>Total GMP</th>
+                            <td class="text-end"><strong>@Model.Gmp.MaleAtLeaving.TotalAnnual.ToString("N2")</strong></td>
+                            <td class="text-end"><strong>@Model.Gmp.FemaleAtLeaving.TotalAnnual.ToString("N2")</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header"><strong>GMP Revalued to Payable Age</strong></div>
+            <div class="card-body">
+                <table class="table table-sm mb-0">
+                    <thead class="table-light">
+                        <tr><th></th><th class="text-end">Male (pa)</th><th class="text-end">Female (pa)</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <th>Pre-88 GMP</th>
+                            <td class="text-end">@Model.Gmp.MaleRevalued.Pre88Annual.ToString("N2")</td>
+                            <td class="text-end">@Model.Gmp.FemaleRevalued.Pre88Annual.ToString("N2")</td>
+                        </tr>
+                        <tr>
+                            <th>Post-88 GMP</th>
+                            <td class="text-end">@Model.Gmp.MaleRevalued.Post88Annual.ToString("N2")</td>
+                            <td class="text-end">@Model.Gmp.FemaleRevalued.Post88Annual.ToString("N2")</td>
+                        </tr>
+                        <tr class="table-light">
+                            <th>Total GMP</th>
+                            <td class="text-end"><strong>@Model.Gmp.MaleRevalued.TotalAnnual.ToString("N2")</strong></td>
+                            <td class="text-end"><strong>@Model.Gmp.FemaleRevalued.TotalAnnual.ToString("N2")</strong></td>
+                        </tr>
+                        <tr>
+                            <th>Revaluation Factor</th>
+                            <td class="text-end">@Model.Gmp.RevaluationFactorMale.ToString("N6")</td>
+                            <td class="text-end">@Model.Gmp.RevaluationFactorFemale.ToString("N6")</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Working Life & Key Figures -->
+<div class="row g-3 mt-1">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header"><strong>Key Figures</strong></div>
+            <div class="card-body">
+                <table class="table table-sm mb-0">
+                    <tr><th style="width:50%">Working Life (Male)</th><td>@Model.Gmp.WorkingLifeMale years</td></tr>
+                    <tr><th>Working Life (Female)</th><td>@Model.Gmp.WorkingLifeFemale years</td></tr>
+                    <tr><th>Tax Year of Leaving</th><td>@Model.Gmp.TaxYearOfLeaving</td></tr>
+                    <tr><th>Barber Window Proportion</th><td>@Model.Gmp.BarberWindowProportion.ToString("N6")</td></tr>
+                    <tr><th>Barber Service Proportion</th><td>@Model.Gmp.BarberServiceProportion.ToString("N6")</td></tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>

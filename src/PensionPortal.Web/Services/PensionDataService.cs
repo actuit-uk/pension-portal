@@ -154,6 +154,27 @@ public class PensionDataService
         return ExecuteQuery(sql, new SqlParameter("@MembershipId", membershipId));
     }
 
+    /// <summary>Returns members that have at least one GMP record, with key GMP fields.</summary>
+    public DataTable GetMembersWithGmp()
+    {
+        const string sql = """
+            SELECT m.membership_id, m.scheme_id, m.date_of_joining, m.date_of_leaving,
+                   p.person_id, p.forename, p.surname, p.gender, p.date_of_birth,
+                   s.scheme_name,
+                   MIN(g.accrual_start_date) AS accrual_start_date,
+                   MAX(g.accrual_end_date) AS accrual_end_date
+            FROM dbo.member m
+            JOIN dbo.person p ON p.person_id = m.person_id
+            JOIN dbo.scheme s ON s.scheme_id = m.scheme_id
+            JOIN dbo.gmp g ON g.membership_id = m.membership_id
+            GROUP BY m.membership_id, m.scheme_id, m.date_of_joining, m.date_of_leaving,
+                     p.person_id, p.forename, p.surname, p.gender, p.date_of_birth,
+                     s.scheme_name
+            ORDER BY p.surname, p.forename
+            """;
+        return ExecuteQuery(sql);
+    }
+
     private DataTable ExecuteQuery(string sql, params SqlParameter[] parameters)
     {
         using var conn = new SqlConnection(_connectionString);

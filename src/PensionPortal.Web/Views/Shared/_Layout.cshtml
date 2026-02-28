@@ -24,6 +24,12 @@
                         <li class="nav-item">
                             <a class="nav-link" asp-controller="Scheme" asp-action="Index">Schemes</a>
                         </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">Calcs</a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" asp-controller="GmpEqualisation" asp-action="Index">GMP Equalisation</a></li>
+                            </ul>
+                        </li>
                         <li class="nav-item">
                             <a class="nav-link" asp-controller="Docs" asp-action="Article" asp-route-name="about">Docs</a>
                         </li>
