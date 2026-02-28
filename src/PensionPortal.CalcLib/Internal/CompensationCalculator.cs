@@ -71,6 +71,18 @@ internal static class CompensationCalculator
             decimal actualTotal = actualPost88 + actualExcess;
             decimal oppSexTotal = oppSexPost88 + oppSexExcess;
 
+            // Raw (unscaled) totals for cross-engine verification
+            decimal rawActualPost88 = actualActive
+                ? (memberSex == Sex.Male ? cf.Post88GmpMale : cf.Post88GmpFemale) : 0m;
+            decimal rawOppSexPost88 = oppSexActive
+                ? (memberSex == Sex.Male ? cf.Post88GmpFemale : cf.Post88GmpMale) : 0m;
+            decimal rawActualExcess = actualActive
+                ? (memberSex == Sex.Male ? cf.ExcessMale : cf.ExcessFemale) : 0m;
+            decimal rawOppSexExcess = oppSexActive
+                ? (memberSex == Sex.Male ? cf.ExcessFemale : cf.ExcessMale) : 0m;
+            decimal rawDifference = (rawOppSexPost88 + rawOppSexExcess)
+                - (rawActualPost88 + rawActualExcess);
+
             // Compensation: positive = opposite-sex better, negative = actual sex better.
             decimal comp = oppSexTotal - actualTotal;
 
@@ -89,7 +101,10 @@ internal static class CompensationCalculator
                 OppSexCashFlow: oppSexTotal,
                 CompensationCashFlow: comp,
                 DiscountRate: rate,
-                DiscountFactor: Math.Round(cumulativeDiscountFactor, 5)));
+                DiscountFactor: Math.Round(cumulativeDiscountFactor, 5),
+                RawDifference: rawDifference,
+                BarberGmpProportion: barberGmpProportion,
+                BarberServiceProportion: barberServiceProportion));
 
             // Update PIP tracking for next iteration
             actualWasInPip = actualInPip;

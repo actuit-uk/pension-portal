@@ -45,9 +45,20 @@ public static class GmpCalculator
         if (settlementDate.HasValue)
         {
             int settlementTaxYear = TaxYearHelper.TaxYearFromDate(settlementDate.Value);
-            interest = InterestCalculator.Calculate(
+            var (totalInterest, perYear) = InterestCalculator.Calculate(
                 compensation, settlementTaxYear, factors,
                 scheme.Assumptions.FutureDiscountRate);
+            interest = totalInterest;
+
+            // Rebuild compensation entries with per-year interest fields
+            if (perYear.Count > 0)
+            {
+                compensation = compensation.Select(c =>
+                    perYear.TryGetValue(c.TaxYear, out var iv)
+                        ? c with { InterestRate = iv.Rate, InterestAmount = iv.Amount }
+                        : c
+                ).ToList().AsReadOnly();
+            }
         }
 
         // Collect warnings

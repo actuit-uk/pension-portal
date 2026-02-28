@@ -60,6 +60,8 @@ internal static class AntiFrankingCalculator
 
             // --- Male AFM ---
             decimal adjustedExcessM = cf.ExcessMale;
+            decimal afmM = 0m;
+            bool afAppliedM = false;
             if (cf.StatusMale == GmpStatus.InPayment)
             {
                 if (!maleEnteredPip)
@@ -74,18 +76,21 @@ internal static class AntiFrankingCalculator
                     afmPost88M = Math.Round(afmPost88M * (1m + prevFactor), 2);
                 }
 
-                decimal afmM = gmp.MaleRevalued.Pre88Annual + afmPost88M + excessAtLeavingMale;
+                afmM = gmp.MaleRevalued.Pre88Annual + afmPost88M + excessAtLeavingMale;
                 decimal actualTotalM = cf.TotalGmpMale + cf.ExcessMale;
 
                 if (actualTotalM < afmM)
                 {
                     // Top up excess to meet the floor
                     adjustedExcessM = Math.Round(afmM - cf.TotalGmpMale, 2);
+                    afAppliedM = true;
                 }
             }
 
             // --- Female AFM ---
             decimal adjustedExcessF = cf.ExcessFemale;
+            decimal afmF = 0m;
+            bool afAppliedF = false;
             if (cf.StatusFemale == GmpStatus.InPayment)
             {
                 if (!femaleEnteredPip)
@@ -98,19 +103,21 @@ internal static class AntiFrankingCalculator
                     afmPost88F = Math.Round(afmPost88F * (1m + prevFactor), 2);
                 }
 
-                decimal afmF = gmp.FemaleRevalued.Pre88Annual + afmPost88F + excessAtLeavingFemale;
+                afmF = gmp.FemaleRevalued.Pre88Annual + afmPost88F + excessAtLeavingFemale;
                 decimal actualTotalF = cf.TotalGmpFemale + cf.ExcessFemale;
 
                 if (actualTotalF < afmF)
                 {
                     adjustedExcessF = Math.Round(afmF - cf.TotalGmpFemale, 2);
+                    afAppliedF = true;
                 }
             }
 
             prevFactor = factor;
 
-            // Only create a new entry if excess was adjusted
-            if (adjustedExcessM != cf.ExcessMale || adjustedExcessF != cf.ExcessFemale)
+            // Always set AF fields when anti-franking is active (even if floor didn't bind)
+            if (adjustedExcessM != cf.ExcessMale || adjustedExcessF != cf.ExcessFemale
+                || afmM != 0m || afmF != 0m)
             {
                 result.Add(cf with
                 {
@@ -118,6 +125,10 @@ internal static class AntiFrankingCalculator
                     TotalPensionMale = cf.TotalGmpMale + adjustedExcessM,
                     ExcessFemale = adjustedExcessF,
                     TotalPensionFemale = cf.TotalGmpFemale + adjustedExcessF,
+                    AntiFrankingAppliedMale = afAppliedM,
+                    AntiFrankingAppliedFemale = afAppliedF,
+                    GmpFloorMale = Math.Round(afmM, 2),
+                    GmpFloorFemale = Math.Round(afmF, 2),
                 });
             }
             else

@@ -18,7 +18,7 @@ public class InterestCalculatorTests
         var factors = new DictionaryFactorProvider();
         factors.AddBaseRate(2020, 0.005m);
 
-        decimal interest = InterestCalculator.Calculate(entries, 2025, factors, 0.01m);
+        var (interest, _) = InterestCalculator.Calculate(entries, 2025, factors, 0.01m);
 
         Assert.Equal(7.50m, interest);
     }
@@ -40,7 +40,7 @@ public class InterestCalculatorTests
         factors.AddBaseRate(2018, 0.0075m);
         factors.AddBaseRate(2019, 0.0075m);
 
-        decimal interest = InterestCalculator.Calculate(entries, 2022, factors, 0.01m);
+        var (interest, _) = InterestCalculator.Calculate(entries, 2022, factors, 0.01m);
 
         // 200 * 0.0175 * 4 = 14.00
         // 150 * 0.0175 * 3 = 7.875 → 7.88
@@ -60,7 +60,7 @@ public class InterestCalculatorTests
         factors.AddBaseRate(2020, 0.01m);
         factors.AddBaseRate(2021, 0.01m);
 
-        decimal interest = InterestCalculator.Calculate(entries, 2025, factors, 0.01m);
+        var (interest, _) = InterestCalculator.Calculate(entries, 2025, factors, 0.01m);
 
         // Only year 2021: 100 * 0.02 * 4 = 8.00
         Assert.Equal(8.00m, interest);
@@ -79,7 +79,7 @@ public class InterestCalculatorTests
         var factors = new DictionaryFactorProvider();
         factors.AddBaseRate(2020, 0.01m);
 
-        decimal interest = InterestCalculator.Calculate(entries, 2025, factors, 0.01m);
+        var (interest, _) = InterestCalculator.Calculate(entries, 2025, factors, 0.01m);
 
         // Only year 2020: 100 * 0.02 * 5 = 10.00
         Assert.Equal(10.00m, interest);
@@ -95,7 +95,7 @@ public class InterestCalculatorTests
         var factors = new DictionaryFactorProvider(); // No base rates added
 
         // Fallback rate = 3%, so interest rate = 3% + 1% = 4%
-        decimal interest = InterestCalculator.Calculate(entries, 2025, factors, 0.03m);
+        var (interest, _) = InterestCalculator.Calculate(entries, 2025, factors, 0.03m);
 
         // 100 * 0.04 * 5 = 20.00
         Assert.Equal(20.00m, interest);
@@ -111,7 +111,7 @@ public class InterestCalculatorTests
         var factors = new DictionaryFactorProvider();
         factors.AddBaseRate(2020, 0.05m);
 
-        decimal interest = InterestCalculator.Calculate(entries, 2025, factors, 0.01m);
+        var (interest, _) = InterestCalculator.Calculate(entries, 2025, factors, 0.01m);
 
         Assert.Equal(0m, interest);
     }

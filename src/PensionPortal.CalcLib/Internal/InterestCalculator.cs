@@ -9,7 +9,8 @@ namespace PensionPortal.CalcLib.Internal;
 internal static class InterestCalculator
 {
     /// <summary>
-    /// Calculates total simple interest on past compensation arrears.
+    /// Calculates simple interest on past compensation arrears, returning both total
+    /// and per-year breakdown for cross-engine verification.
     /// Only positive compensation amounts (years where the member was disadvantaged)
     /// accrue interest. Future years (at or after settlement) are excluded.
     /// </summary>
@@ -17,13 +18,15 @@ internal static class InterestCalculator
     /// <param name="settlementTaxYear">The tax year of settlement.</param>
     /// <param name="factors">Factor provider for base rate lookups.</param>
     /// <param name="fallbackBaseRate">Base rate to use when no factor data is available.</param>
-    internal static decimal Calculate(
+    /// <returns>Total interest and per-year breakdown keyed by tax year.</returns>
+    internal static (decimal Total, Dictionary<int, (decimal Rate, decimal Amount)> PerYear) Calculate(
         IReadOnlyList<CompensationEntry> compensation,
         int settlementTaxYear,
         IFactorProvider factors,
         decimal fallbackBaseRate)
     {
         decimal totalInterest = 0m;
+        var perYear = new Dictionary<int, (decimal Rate, decimal Amount)>();
 
         foreach (var entry in compensation)
         {
@@ -40,9 +43,11 @@ internal static class InterestCalculator
             int years = settlementTaxYear - entry.TaxYear;
 
             // Simple interest: principal × rate × time
-            totalInterest += Math.Round(entry.CompensationCashFlow * interestRate * years, 2);
+            decimal amount = Math.Round(entry.CompensationCashFlow * interestRate * years, 2);
+            totalInterest += amount;
+            perYear[entry.TaxYear] = (interestRate, amount);
         }
 
-        return Math.Round(totalInterest, 2);
+        return (Math.Round(totalInterest, 2), perYear);
     }
 }

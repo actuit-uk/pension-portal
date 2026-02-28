@@ -275,7 +275,8 @@ public static class GmpWorkbookBuilder
             "Tax Year",
             "Status (M)", "Pre-88 GMP (M)", "Post-88 GMP (M)", "Total GMP (M)", "Excess (M)", "Total Pension (M)",
             "Status (F)", "Pre-88 GMP (F)", "Post-88 GMP (F)", "Total GMP (F)", "Excess (F)", "Total Pension (F)",
-            "Post-88 Inc %", "Excess Inc %"
+            "Post-88 Inc %", "Excess Inc %",
+            "AF Applied (M)", "GMP Floor (M)", "AF Applied (F)", "GMP Floor (F)"
         };
 
         for (int i = 0; i < headers.Length; i++)
@@ -304,6 +305,10 @@ public static class GmpWorkbookBuilder
             WriteCurrency(ws, row, 13, cf.TotalPensionFemale);
             WritePercent(ws, row, 14, cf.Post88GmpIncFactor);
             WritePercent(ws, row, 15, cf.ExcessIncFactor);
+            ws.Cell(row, 16).Value = cf.AntiFrankingAppliedMale ? "Yes" : "";
+            WriteCurrency(ws, row, 17, cf.GmpFloorMale);
+            ws.Cell(row, 18).Value = cf.AntiFrankingAppliedFemale ? "Yes" : "";
+            WriteCurrency(ws, row, 19, cf.GmpFloorFemale);
             row++;
         }
 
@@ -327,7 +332,9 @@ public static class GmpWorkbookBuilder
 
         string[] headers = {
             "Tax Year", "Actual Cash Flow", "Opp Sex Cash Flow",
-            "Compensation", "Discount Rate", "Discount Factor"
+            "Compensation", "Discount Rate", "Discount Factor",
+            "Raw Difference", "Barber GMP %", "Barber Svc %",
+            "Interest Rate", "Interest Amount"
         };
 
         for (int i = 0; i < headers.Length; i++)
@@ -348,6 +355,11 @@ public static class GmpWorkbookBuilder
             WritePercent(ws, row, 5, c.DiscountRate);
             ws.Cell(row, 6).Value = (double)c.DiscountFactor;
             ws.Cell(row, 6).Style.NumberFormat.Format = "0.000000";
+            WriteCurrency(ws, row, 7, c.RawDifference);
+            WritePercent(ws, row, 8, c.BarberGmpProportion);
+            WritePercent(ws, row, 9, c.BarberServiceProportion);
+            WritePercent(ws, row, 10, c.InterestRate);
+            WriteCurrency(ws, row, 11, c.InterestAmount);
             row++;
         }
 

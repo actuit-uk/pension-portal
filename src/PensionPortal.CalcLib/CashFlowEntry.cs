@@ -20,6 +20,10 @@ namespace PensionPortal.CalcLib;
 /// <param name="TotalPensionFemale">Total pension payable (female).</param>
 /// <param name="Post88GmpIncFactor">Post-1988 GMP increase factor applied this year (LPI rate).</param>
 /// <param name="ExcessIncFactor">Pension increase factor applied to excess pension this year.</param>
+/// <param name="AntiFrankingAppliedMale">True if anti-franking floor bound and excess was adjusted upward (male).</param>
+/// <param name="AntiFrankingAppliedFemale">True if anti-franking floor bound and excess was adjusted upward (female).</param>
+/// <param name="GmpFloorMale">Anti-franking minimum pension floor value (male). Zero if not in PIP or AF disabled.</param>
+/// <param name="GmpFloorFemale">Anti-franking minimum pension floor value (female). Zero if not in PIP or AF disabled.</param>
 public record CashFlowEntry(
     int TaxYear,
     GmpStatus StatusMale,
@@ -35,4 +39,8 @@ public record CashFlowEntry(
     decimal ExcessFemale,
     decimal TotalPensionFemale,
     decimal Post88GmpIncFactor,
-    decimal ExcessIncFactor);
+    decimal ExcessIncFactor,
+    bool AntiFrankingAppliedMale = false,
+    bool AntiFrankingAppliedFemale = false,
+    decimal GmpFloorMale = 0m,
+    decimal GmpFloorFemale = 0m);
