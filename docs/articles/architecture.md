@@ -94,6 +94,53 @@ The engine covers the full C2 methodology: GMP calculation with all three revalu
 
 The `PensionPortal.CalcLib.Export` project uses ClosedXML to produce multi-sheet Excel workbooks from `EqualisationResult`. Follows the appcore pattern of formatted tables with frozen panes and type-aware number formats. Sheets: Summary (with compensation totals and Barber window), Tax Year Detail (audit trail), GMP at Leaving, GMP Revalued, Cash Flow (year-by-year projection with GMP/excess/total for both sexes), Compensation (actual vs opposite-sex with discount factors, interest, and grand total).
 
+## Database Schema
+
+The application uses SQL Server with two schema namespaces:
+
+### `dbo` — pension-standard tables (member data)
+
+Member data uses the [pension-standard](https://github.com/actuit-uk/pension-standard) schema. Key tables consumed by CalcLib:
+
+| Table | CalcLib mapping |
+|-------|----------------|
+| `person` | `MemberData.Sex` (from `gender`), `MemberData.DateOfBirth` |
+| `member` | `MemberData.DateOfLeaving`, section FK for benefit rules |
+| `gmp` | `MemberData.DateCOStart/DateCOEnd`, `GmpRevaluationMethod` (from `revaluation_basis`), `MemberData.HasTransferredInGmp` (from `gmp_source = 'TRANSFER_IN'`) |
+| `section` | `SchemeConfig` — NRA, accrual rate, increase method, PIP method, anti-franking (pension-standard [#1](https://github.com/actuit-uk/pension-standard/issues/1)) |
+| `financial` | `MemberData.Earnings`, salary data for `EarningsEstimator` (pension-standard [#2](https://github.com/actuit-uk/pension-standard/issues/2)) |
+| `benefit_slice` | `MemberData.PensionAtLeaving` (from `slice_type = 'SCHEME'`) |
+
+The `section` table links loosely to FinancialEntities' `ArrangementSection` via `source_system` / `source_record_id`.
+
+### `calc` — GMP equalisation engine (results + factors)
+
+Engine-specific tables for factor data and calculation outputs:
+
+| Table | Purpose |
+|-------|---------|
+| `calc.factor` | Actuarial reference data: S148 orders, LPI rates, discount rates, BoE base rates. Keyed by `(factor_type, tax_year)`. Will dovetail with ActuarialData library when finalised. |
+| `calc.run` | Calculation audit trail: inputs snapshot, summary outputs, run metadata |
+| `calc.run_cashflow` | Year-by-year cash flow projection (maps to `CashFlowEntry`) |
+| `calc.run_compensation` | Year-by-year compensation (maps to `CompensationEntry`) |
+
+All input data lives in pension-standard (`dbo`). The `calc` schema holds only factor reference data and calculation outputs.
+
+### Data flow
+
+```
+dbo.person + dbo.member + dbo.gmp     → MemberData
+dbo.section                            → SchemeConfig
+dbo.financial (earnings/salary)        → MemberData.Earnings (or via EarningsEstimator)
+calc.factor                            → IFactorProvider
+                    ↓
+            GmpCalculator.Calculate()
+                    ↓
+calc.run + calc.run_cashflow + calc.run_compensation
+                    ↓
+dbo.gmp (update equalisation_status, equalisation_uplift)
+```
+
 ## Deployment
 
 The application is published with `dotnet publish -c Release` and deployed to IONOS via FTP. The CalcLib DLL is bundled in the published output — it runs on the web server, not as a separate service.
